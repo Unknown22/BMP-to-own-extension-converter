@@ -6,6 +6,12 @@ public:
 	int konwerter(char* path);
 };
 
+class saveFileClass
+{
+public:
+	int saveFile(char* path);
+};
+
 namespace Konsolowy {
 
 	using namespace System;
@@ -15,6 +21,7 @@ namespace Konsolowy {
 	using namespace System::Data;
 	using namespace System::Drawing;
 	using namespace System::Runtime::InteropServices;
+	using namespace System::IO;
 
 	/// <summary>
 	/// Summary for MyForm
@@ -49,8 +56,12 @@ namespace Konsolowy {
 	private: System::Windows::Forms::Label^  label1;
 	private: System::Windows::Forms::TabPage^  tabPage3;
 	private: System::Windows::Forms::TextBox^  textBox1;
+	private: System::Windows::Forms::TextBox^  textBox2;
 	private: System::Windows::Forms::Button^  button1;
 	private: System::Windows::Forms::OpenFileDialog^  openFile1;
+	private: System::Windows::Forms::Button^  button2;
+	private: System::Windows::Forms::SaveFileDialog^  saveFile1;
+
 
 
 	private:
@@ -68,12 +79,14 @@ namespace Konsolowy {
 		{
 			this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 			this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
+			this->button2 = (gcnew System::Windows::Forms::Button());
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
 			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->tabPage2 = (gcnew System::Windows::Forms::TabPage());
 			this->tabPage3 = (gcnew System::Windows::Forms::TabPage());
 			this->openFile1 = (gcnew System::Windows::Forms::OpenFileDialog());
+			this->saveFile1 = (gcnew System::Windows::Forms::SaveFileDialog());
 			this->tabControl1->SuspendLayout();
 			this->tabPage1->SuspendLayout();
 			this->SuspendLayout();
@@ -91,6 +104,7 @@ namespace Konsolowy {
 			// 
 			// tabPage1
 			// 
+			this->tabPage1->Controls->Add(this->button2);
 			this->tabPage1->Controls->Add(this->button1);
 			this->tabPage1->Controls->Add(this->textBox1);
 			this->tabPage1->Controls->Add(this->label1);
@@ -101,6 +115,16 @@ namespace Konsolowy {
 			this->tabPage1->TabIndex = 0;
 			this->tabPage1->Text = L"BMP -> MMSS";
 			this->tabPage1->UseVisualStyleBackColor = true;
+			// 
+			// button2
+			// 
+			this->button2->Location = System::Drawing::Point(70, 182);
+			this->button2->Name = L"button2";
+			this->button2->Size = System::Drawing::Size(112, 23);
+			this->button2->TabIndex = 3;
+			this->button2->Text = L"Konwertuj i zapisz";
+			this->button2->UseVisualStyleBackColor = true;
+			this->button2->Click += gcnew System::EventHandler(this, &MyForm::button2_Click);
 			// 
 			// button1
 			// 
@@ -156,6 +180,11 @@ namespace Konsolowy {
 			this->openFile1->Filter = L"Mapa bitowa 6-bitowa (*.bmp)|*.bmp";
 			this->openFile1->FileOk += gcnew System::ComponentModel::CancelEventHandler(this, &MyForm::openFileDialog1_FileOk);
 			// 
+			// saveFile1
+			// 
+			this->saveFile1->FileName = L"image.mmss";
+			this->saveFile1->Filter = L"Rozszerzenie graficzne typu MMSS (*.mmss)|*.mmss";
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -184,18 +213,28 @@ namespace Konsolowy {
 
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e)
 	{
-				 konwerterClass cl;
 				 openFile1->ShowDialog();
 				 System::String ^path1 = openFile1->FileName;
 				 textBox1->Text = path1;
-				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(path1);
-				 int k = cl.konwerter(pathChar);
-				 MessageBox::Show("Konwersja zakonczona");
 	}
 
 	private: System::Void openFileDialog1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e)
 	{
 
 	}
-	};
+	private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
+				 //konwersja
+				 konwerterClass cl;
+				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
+				 int k = cl.konwerter(pathChar);
+				 //MessageBox::Show("Konwersja zakonczona");
+
+				 //zapisywanie
+				 saveFile1->ShowDialog();
+				 saveFileClass save;
+				 System::String ^path2 = saveFile1->FileName;
+				 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
+				 int m = save.saveFile(pathSave);
+	}
+};
 }

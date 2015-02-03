@@ -44,6 +44,7 @@ FILE* f;
 unsigned char* Pixels;
 BMPInfoHeader bih;
 RGBPixel ColorTable[64];
+int t = 0; //indeks w tabeli kolorów
 
 
 void ReadBMP(char* path)
@@ -73,10 +74,11 @@ void ReadBMP(char* path)
 	fclose(f);
 }
 
-void SaveFile(int t)
+int saveFileClass::saveFile(char* path)
 {
+
 	int i;
-	ofstream fout("image.mmss");
+	ofstream fout(path);
 	if (t < 10)
 	{
 		fout << "0" << t;
@@ -133,12 +135,12 @@ void SaveFile(int t)
 			}
 		}
 	}
+	return 0;
 }
 
 int MakeColorTable()
 {
 	RGBPixel CheckColor;
-	int t = 0; //indeks w tabeli kolorów
 	int m = 0; //okresla czy kolor byl juz w tablicy, 0 - nie byl, 1 - byl
 	for (int i = 0; i < bih.Height*bih.Width * 3; i += 3)
 	{
@@ -180,7 +182,7 @@ int konwerterClass::konwerter(char* path)
 		//cout << (int)Pixels[x + 2] << ":" << (int)Pixels[x + 1] << ":" << (int)Pixels[x] << " ";
 	}
 	int t = MakeColorTable();
-	SaveFile(t);
+	//SaveFile(t);
 
 	//cout << endl;
 	return 0;
