@@ -166,12 +166,12 @@ int MakeColorTable()
 	/*
 	for (int i = 0; i < t; i++)
 	{
-		cout << i << ". " << ColorTable[i].Red << ":" << ColorTable[i].Green << ":" << ColorTable[i].Blue << endl;
+	cout << i << ". " << ColorTable[i].Red << ":" << ColorTable[i].Green << ":" << ColorTable[i].Blue << endl;
 	}*/
 	return t;
 }
-/*
-int konwerter(char* path)
+
+int konwerterClass::konwerter(char* path)
 {
 	ReadBMP(path);
 
@@ -185,7 +185,7 @@ int konwerter(char* path)
 	//cout << endl;
 	return 0;
 }
-*/
+
 [STAThread]
 void main(array<String^>^ args) {
 	Application::EnableVisualStyles();

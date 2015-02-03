@@ -1,5 +1,11 @@
 #pragma once
 
+class konwerterClass
+{
+public:
+	int konwerter(char* path);
+};
+
 namespace Konsolowy {
 
 	using namespace System;
@@ -8,10 +14,12 @@ namespace Konsolowy {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace System::Runtime::InteropServices;
 
 	/// <summary>
 	/// Summary for MyForm
 	/// </summary>
+
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	public:
@@ -163,15 +171,31 @@ namespace Konsolowy {
 
 		}
 #pragma endregion
-	private: System::Void label1_Click(System::Object^  sender, System::EventArgs^  e) {
+
+	private: System::Void label1_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+
 	}
-private: System::Void textBox1_TextChanged(System::Object^  sender, System::EventArgs^  e) {
-}
-	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {
+
+	private: System::Void textBox1_TextChanged(System::Object^  sender, System::EventArgs^  e)
+	{
+
+	}
+
+	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e)
+	{
+				 konwerterClass cl;
 				 openFile1->ShowDialog();
-				 textBox1->Text = openFile1->FileName;
+				 System::String ^path1 = openFile1->FileName;
+				 textBox1->Text = path1;
+				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(path1);
+				 int k = cl.konwerter(pathChar);
+				 MessageBox::Show(k.ToString());
 	}
-private: System::Void openFileDialog1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e) {
-}
-};
+
+	private: System::Void openFileDialog1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e)
+	{
+
+	}
+	};
 }
