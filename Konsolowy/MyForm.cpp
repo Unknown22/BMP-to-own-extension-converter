@@ -44,6 +44,7 @@ FILE* f;
 unsigned char* Pixels;
 BMPInfoHeader bih;
 RGBPixel ColorTable[64];
+int t = 0; //indeks w tabeli kolorów
 
 
 void ReadBMP(char* path)
@@ -73,41 +74,54 @@ void ReadBMP(char* path)
 	fclose(f);
 }
 
-void SaveFile(int t)
+int saveFileClass::saveFile(char* path)
 {
+	int lastColor = -1;
+	int colorCount = 0;
 	int i;
-	ofstream fout("image.mmss");
-	if (t < 10)
+	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width];
+	for (int z = 0; z < bih.Height*bih.Width; z++)
 	{
-		fout << "0" << t;
+		ToSave[z] = 'q';
 	}
-	else
-	{
-		fout << t;
-	}
+	int k = 0;
+	int j = 0;
+	unsigned char* ColorsToSave = new unsigned char[t * 3];
+	//ofstream fout(path);
+	//if (t < 10)
+	//{
+	//	//fout << "0" << t;
+	//}
+	//else
+	//{
+	//	fout << t;
+	//}
+	//ToSave[k++] = t;
 	for (i = 0; i < t; i++)
 	{
-		if (ColorTable[i].Red < 100)
+		//if (ColorTable[i].Red < 100)
+		//{
+		//	//fout << "0";
+		//	/*if (ColorTable[i].Red < 10)
+		//		fout << "0";*/
+		//}
+
+		//fout << ColorTable[i].Red;
+		ColorsToSave[j++] = ColorTable[i].Red;
+		/*if (ColorTable[i].Green < 100)
 		{
-			fout << "0";
-			if (ColorTable[i].Red < 10)
-				fout << "0";
-		}
-		fout << ColorTable[i].Red;
-		if (ColorTable[i].Green < 100)
+		fout << "0";
+		if (ColorTable[i].Green < 10)
+		fout << "0";
+		}*/
+		ColorsToSave[j++] = ColorTable[i].Green;
+		/*if (ColorTable[i].Blue < 100)
 		{
-			fout << "0";
-			if (ColorTable[i].Green < 10)
-				fout << "0";
-		}
-		fout << ColorTable[i].Green;
-		if (ColorTable[i].Blue < 100)
-		{
-			fout << "0";
-			if (ColorTable[i].Blue < 10)
-				fout << "0";
-		}
-		fout << ColorTable[i].Blue;
+		fout << "0";
+		if (ColorTable[i].Blue < 10)
+		fout << "0";
+		}*/
+		ColorsToSave[j++] = ColorTable[i].Blue;
 	}
 	for (i = 0; i < bih.Height*bih.Width * 3; i += 3)
 	{
@@ -118,27 +132,111 @@ void SaveFile(int t)
 				(int)Pixels[i + 1] == ColorTable[x].Green &&
 				(int)Pixels[i] == ColorTable[x].Blue)
 			{
-				if (t < 10)
+				
+				if (lastColor == -1)
 				{
-					fout << x;
+					lastColor = x;
+					colorCount = 0;
+				}
+				else{
+					if (x != lastColor)
+					{
+
+						//nowy kolor
+						ToSave[k++] = colorCount;
+						//fout << colorCount;
+						ToSave[k++] = lastColor;
+						//fout << lastColor;
+						colorCount = 0;
+						lastColor = x;
+					}
+					else
+					{
+						//stary kolor
+						if (colorCount > -128)
+						{
+							colorCount--;
+						}
+						else
+						{
+							ToSave[k++] = colorCount;
+							ToSave[k++] = lastColor;
+							colorCount = 0;
+						}
+					}
+				}
+
+
+
+
+				//fout << x;
+				/*if (t < 10)
+				{
+				fout << x;
 				}
 				else
 				{
-					if (x < 10)
-					{
-						fout << "0";
-					}
-					fout << x;
+				if (x < 10)
+				{
+				fout << "0";
 				}
+				fout << x;
+				}*/
 			}
 		}
 	}
+
+	FILE* s;
+	if (fopen_s(&s, path, "wb") != 0) return 0;/*
+	fwrite(&bih.BMPType, (size_t) sizeof(bih.BMPType), (size_t)1, s);
+	fwrite(&bih.FileSize, (size_t) sizeof(bih.FileSize), (size_t)1, s);
+	fwrite(&bih.Reserved1, (size_t) sizeof(bih.Reserved1), (size_t)1, s);
+	fwrite(&bih.Reserved2, (size_t) sizeof(bih.Reserved2), (size_t)1, s);
+	fwrite(&bih.OffBits, (size_t) sizeof(bih.OffBits), (size_t)1, s);
+	fwrite(&bih.HeaderSize, (size_t) sizeof(bih.HeaderSize), (size_t)1, s);
+	fwrite(&bih.Width, (size_t) sizeof(bih.Width), (size_t)1, s);
+	fwrite(&bih.Height, (size_t) sizeof(bih.Height), (size_t)1, s);
+	fwrite(&bih.Planes, (size_t) sizeof(bih.Planes), (size_t)1, s);
+	fwrite(&bih.BitsPerPxl, (size_t) sizeof(bih.BitsPerPxl), (size_t)1, s);
+	fwrite(&bih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s);
+	fwrite(&bih.ImageSize, (size_t) sizeof(bih.ImageSize), (size_t)1, s);
+	fwrite(&bih.XPixels, (size_t) sizeof(bih.XPixels), (size_t)1, s);
+	fwrite(&bih.YPixels, (size_t) sizeof(bih.YPixels), (size_t)1, s);
+	fwrite(&bih.ColorsUsed, (size_t) sizeof(bih.ColorsUsed), (size_t)1, s);
+	fwrite(&bih.ColorsImportant, (size_t) sizeof(bih.ColorsImportant), (size_t)1, s);*/
+
+	unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
+	fseek(s, bih.OffBits, SEEK_SET);
+	for (unsigned int cc = 0; cc < t * 3; cc++)
+	{
+		fwrite(ColorsToSave + cc, (size_t)bih.Width, (size_t)1, s);
+	}
+	fseek(s, bih.OffBits + t * 3, SEEK_SET);
+	
+	int iterator = 0;
+
+	while (ToSave[iterator] != 'q')
+	{
+		iterator++;
+	}
+	for (int q = 0; q < iterator; q++)
+	{
+		fwrite(ToSave + q, (size_t)1, (size_t)1, s);
+		fwrite("\0", 1, padding, s); //Nie wiem czy to tak ma byæ, Irozin sprawdz czy dobrze
+	}
+	/*
+	for (unsigned int a = 0; a < bih.Height; ++a)
+	{
+		fwrite(ToSave + a * bih.Width, (size_t)bih.Width, (size_t)1, s);
+		fwrite("\0", 1, padding, s);
+	}*/
+	fclose(s);
+	return 0;
 }
 
 int MakeColorTable()
 {
 	RGBPixel CheckColor;
-	int t = 0; //indeks w tabeli kolorów
 	int m = 0; //okresla czy kolor byl juz w tablicy, 0 - nie byl, 1 - byl
 	for (int i = 0; i < bih.Height*bih.Width * 3; i += 3)
 	{
@@ -166,12 +264,12 @@ int MakeColorTable()
 	/*
 	for (int i = 0; i < t; i++)
 	{
-		cout << i << ". " << ColorTable[i].Red << ":" << ColorTable[i].Green << ":" << ColorTable[i].Blue << endl;
+	cout << i << ". " << ColorTable[i].Red << ":" << ColorTable[i].Green << ":" << ColorTable[i].Blue << endl;
 	}*/
 	return t;
 }
-/*
-int konwerter(char* path)
+
+int konwerterClass::konwerter(char* path)
 {
 	ReadBMP(path);
 
@@ -180,12 +278,12 @@ int konwerter(char* path)
 		//cout << (int)Pixels[x + 2] << ":" << (int)Pixels[x + 1] << ":" << (int)Pixels[x] << " ";
 	}
 	int t = MakeColorTable();
-	SaveFile(t);
+	//SaveFile(t);
 
 	//cout << endl;
 	return 0;
 }
-*/
+
 [STAThread]
 void main(array<String^>^ args) {
 	Application::EnableVisualStyles();
