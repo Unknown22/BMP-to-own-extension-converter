@@ -78,38 +78,45 @@ int saveFileClass::saveFile(char* path)
 {
 
 	int i;
-	ofstream fout(path);
-	if (t < 10)
-	{
-		fout << "0" << t;
-	}
-	else
-	{
-		fout << t;
-	}
+	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width];
+	int k = 0;
+	int j = 0;
+	unsigned char* ColorsToSave = new unsigned char[t * 3];
+	//ofstream fout(path);
+	//if (t < 10)
+	//{
+	//	//fout << "0" << t;
+	//}
+	//else
+	//{
+	//	fout << t;
+	//}
+	//ToSave[k++] = t;
 	for (i = 0; i < t; i++)
 	{
-		if (ColorTable[i].Red < 100)
+		//if (ColorTable[i].Red < 100)
+		//{
+		//	//fout << "0";
+		//	/*if (ColorTable[i].Red < 10)
+		//		fout << "0";*/
+		//}
+
+		//fout << ColorTable[i].Red;
+		ColorsToSave[j++] = ColorTable[i].Red;
+		/*if (ColorTable[i].Green < 100)
 		{
-			fout << "0";
-			if (ColorTable[i].Red < 10)
-				fout << "0";
-		}
-		fout << ColorTable[i].Red;
-		if (ColorTable[i].Green < 100)
+		fout << "0";
+		if (ColorTable[i].Green < 10)
+		fout << "0";
+		}*/
+		ColorsToSave[j++] = ColorTable[i].Green;
+		/*if (ColorTable[i].Blue < 100)
 		{
-			fout << "0";
-			if (ColorTable[i].Green < 10)
-				fout << "0";
-		}
-		fout << ColorTable[i].Green;
-		if (ColorTable[i].Blue < 100)
-		{
-			fout << "0";
-			if (ColorTable[i].Blue < 10)
-				fout << "0";
-		}
-		fout << ColorTable[i].Blue;
+		fout << "0";
+		if (ColorTable[i].Blue < 10)
+		fout << "0";
+		}*/
+		ColorsToSave[j++] = ColorTable[i].Blue;
 	}
 	for (i = 0; i < bih.Height*bih.Width * 3; i += 3)
 	{
@@ -120,21 +127,56 @@ int saveFileClass::saveFile(char* path)
 				(int)Pixels[i + 1] == ColorTable[x].Green &&
 				(int)Pixels[i] == ColorTable[x].Blue)
 			{
-				if (t < 10)
+				ToSave[k++] = x;
+				//fout << x;
+				/*if (t < 10)
 				{
-					fout << x;
+				fout << x;
 				}
 				else
 				{
-					if (x < 10)
-					{
-						fout << "0";
-					}
-					fout << x;
+				if (x < 10)
+				{
+				fout << "0";
 				}
+				fout << x;
+				}*/
 			}
 		}
 	}
+
+	FILE* s;
+	if (fopen_s(&s, path, "wb") != 0) return 0;/*
+	fwrite(&bih.BMPType, (size_t) sizeof(bih.BMPType), (size_t)1, s);
+	fwrite(&bih.FileSize, (size_t) sizeof(bih.FileSize), (size_t)1, s);
+	fwrite(&bih.Reserved1, (size_t) sizeof(bih.Reserved1), (size_t)1, s);
+	fwrite(&bih.Reserved2, (size_t) sizeof(bih.Reserved2), (size_t)1, s);
+	fwrite(&bih.OffBits, (size_t) sizeof(bih.OffBits), (size_t)1, s);
+	fwrite(&bih.HeaderSize, (size_t) sizeof(bih.HeaderSize), (size_t)1, s);
+	fwrite(&bih.Width, (size_t) sizeof(bih.Width), (size_t)1, s);
+	fwrite(&bih.Height, (size_t) sizeof(bih.Height), (size_t)1, s);
+	fwrite(&bih.Planes, (size_t) sizeof(bih.Planes), (size_t)1, s);
+	fwrite(&bih.BitsPerPxl, (size_t) sizeof(bih.BitsPerPxl), (size_t)1, s);
+	fwrite(&bih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s);
+	fwrite(&bih.ImageSize, (size_t) sizeof(bih.ImageSize), (size_t)1, s);
+	fwrite(&bih.XPixels, (size_t) sizeof(bih.XPixels), (size_t)1, s);
+	fwrite(&bih.YPixels, (size_t) sizeof(bih.YPixels), (size_t)1, s);
+	fwrite(&bih.ColorsUsed, (size_t) sizeof(bih.ColorsUsed), (size_t)1, s);
+	fwrite(&bih.ColorsImportant, (size_t) sizeof(bih.ColorsImportant), (size_t)1, s);*/
+
+	unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
+	fseek(s, bih.OffBits, SEEK_SET);
+	for (unsigned int cc = 0; cc < t * 3; cc++)
+	{
+		fwrite(ColorsToSave + cc, (size_t)bih.Width, (size_t)1, s);
+	}
+	fseek(s, bih.OffBits + t * 3, SEEK_SET);
+	for (unsigned int a = 0; a < bih.Height; ++a)
+	{
+		fwrite(ToSave + a * bih.Width, (size_t)bih.Width, (size_t)1, s);
+		fwrite("\0", 1, padding, s);
+	}
+	fclose(s);
 	return 0;
 }
 
