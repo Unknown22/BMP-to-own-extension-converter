@@ -190,7 +190,7 @@ namespace Konsolowy {
 				 textBox1->Text = path1;
 				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(path1);
 				 int k = cl.konwerter(pathChar);
-				 MessageBox::Show(k.ToString());
+				 MessageBox::Show("Konwersja zakonczona");
 	}
 
 	private: System::Void openFileDialog1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e)
