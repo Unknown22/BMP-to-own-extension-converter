@@ -228,14 +228,17 @@ namespace Konsolowy {
 				 konwerterClass cl;
 				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
 				 int k = cl.konwerter(pathChar);
-				 //MessageBox::Show("Konwersja zakonczona");
-
-				 //zapisywanie
-				 saveFile1->ShowDialog();
-				 saveFileClass save;
-				 System::String ^path2 = saveFile1->FileName;
-				 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
-				 int m = save.saveFile(pathSave);
+				 
+				 if (k == 0)
+				 {
+					 //zapisywanie
+					 saveFile1->ShowDialog();
+					 saveFileClass save;
+					 System::String ^path2 = saveFile1->FileName;
+					 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
+					 int m = save.saveFile(pathSave);
+					 MessageBox::Show("Konwersja zakonczona");
+				 }
 	}
 };
 }

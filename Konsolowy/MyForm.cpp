@@ -80,57 +80,22 @@ int saveFileClass::saveFile(char* path)
 	int colorCount = 0;
 	int i;
 	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width];
-	for (int z = 0; z < bih.Height*bih.Width; z++)
-	{
-		ToSave[z] = 'q';
-	}
 	int k = 0;
 	int j = 0;
 	unsigned char* ColorsToSave = new unsigned char[t * 3];
-	//ofstream fout(path);
-	//if (t < 10)
-	//{
-	//	//fout << "0" << t;
-	//}
-	//else
-	//{
-	//	fout << t;
-	//}
-	//ToSave[k++] = t;
+
 	for (i = 0; i < t; i++)
 	{
-		//if (ColorTable[i].Red < 100)
-		//{
-		//	//fout << "0";
-		//	/*if (ColorTable[i].Red < 10)
-		//		fout << "0";*/
-		//}
-
-		//fout << ColorTable[i].Red;
 		ColorsToSave[j++] = ColorTable[i].Red;
-		/*if (ColorTable[i].Green < 100)
-		{
-		fout << "0";
-		if (ColorTable[i].Green < 10)
-		fout << "0";
-		}*/
 		ColorsToSave[j++] = ColorTable[i].Green;
-		/*if (ColorTable[i].Blue < 100)
-		{
-		fout << "0";
-		if (ColorTable[i].Blue < 10)
-		fout << "0";
-		}*/
 		ColorsToSave[j++] = ColorTable[i].Blue;
 	}
+
 	for (i = 0; i < bih.Height*bih.Width * 3; i += 3)
 	{
-		//fout << (int)Pixels[i + 2] << (int)Pixels[i + 1] << (int)Pixels[i];
 		for (int x = 0; x < t; x++)
 		{
-			if ((int)Pixels[i + 2] == ColorTable[x].Red &&
-				(int)Pixels[i + 1] == ColorTable[x].Green &&
-				(int)Pixels[i] == ColorTable[x].Blue)
+			if ((int)Pixels[i + 2] == ColorTable[x].Red && (int)Pixels[i + 1] == ColorTable[x].Green && (int)Pixels[i] == ColorTable[x].Blue)
 			{
 				
 				if (lastColor == -1)
@@ -138,56 +103,40 @@ int saveFileClass::saveFile(char* path)
 					lastColor = x;
 					colorCount = 0;
 				}
-				else{
+				else
+				{
 					if (x != lastColor)
 					{
 
 						//nowy kolor
+						//Przy dekodowaniu braæ 1-colorCount
 						ToSave[k++] = colorCount;
-						//fout << colorCount;
 						ToSave[k++] = lastColor;
-						//fout << lastColor;
 						colorCount = 0;
 						lastColor = x;
 					}
 					else
 					{
 						//stary kolor
-						if (colorCount > -128)
+						if (colorCount < 128)
 						{
-							colorCount--;
+							colorCount++;
 						}
 						else
 						{
+							//Przy dekodowaniu braæ 1-colorCount
 							ToSave[k++] = colorCount;
 							ToSave[k++] = lastColor;
 							colorCount = 0;
 						}
 					}
 				}
-
-
-
-
-				//fout << x;
-				/*if (t < 10)
-				{
-				fout << x;
-				}
-				else
-				{
-				if (x < 10)
-				{
-				fout << "0";
-				}
-				fout << x;
-				}*/
 			}
 		}
 	}
 
 	FILE* s;
-	if (fopen_s(&s, path, "wb") != 0) return 0;/*
+	if (fopen_s(&s, path, "wb") != 0) return 0;
 	fwrite(&bih.BMPType, (size_t) sizeof(bih.BMPType), (size_t)1, s);
 	fwrite(&bih.FileSize, (size_t) sizeof(bih.FileSize), (size_t)1, s);
 	fwrite(&bih.Reserved1, (size_t) sizeof(bih.Reserved1), (size_t)1, s);
@@ -203,33 +152,22 @@ int saveFileClass::saveFile(char* path)
 	fwrite(&bih.XPixels, (size_t) sizeof(bih.XPixels), (size_t)1, s);
 	fwrite(&bih.YPixels, (size_t) sizeof(bih.YPixels), (size_t)1, s);
 	fwrite(&bih.ColorsUsed, (size_t) sizeof(bih.ColorsUsed), (size_t)1, s);
-	fwrite(&bih.ColorsImportant, (size_t) sizeof(bih.ColorsImportant), (size_t)1, s);*/
-
+	fwrite(&bih.ColorsImportant, (size_t) sizeof(bih.ColorsImportant), (size_t)1, s);
+	
+	
 	unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
 	fseek(s, bih.OffBits, SEEK_SET);
-	for (unsigned int cc = 0; cc < t * 3; cc++)
+	for (unsigned int cc = 0; cc < j; cc++)
 	{
-		fwrite(ColorsToSave + cc, (size_t)bih.Width, (size_t)1, s);
+		fwrite(ColorsToSave + cc, (size_t)sizeof(Byte), (size_t)1, s);
 	}
-	fseek(s, bih.OffBits + t * 3, SEEK_SET);
+	fseek(s, bih.OffBits + j, SEEK_SET);
+	for (int q = 0; q < k; q++)
+	{
+		fwrite(ToSave + q, (size_t)sizeof(Byte), (size_t)1, s);
+	}
 	
-	int iterator = 0;
-
-	while (ToSave[iterator] != 'q')
-	{
-		iterator++;
-	}
-	for (int q = 0; q < iterator; q++)
-	{
-		fwrite(ToSave + q, (size_t)1, (size_t)1, s);
-		fwrite("\0", 1, padding, s); //Nie wiem czy to tak ma byæ, Irozin sprawdz czy dobrze
-	}
-	/*
-	for (unsigned int a = 0; a < bih.Height; ++a)
-	{
-		fwrite(ToSave + a * bih.Width, (size_t)bih.Width, (size_t)1, s);
-		fwrite("\0", 1, padding, s);
-	}*/
+		//fwrite("\0", 1, padding, s); NIE WIEM CO Z TYM ZROBIC, ZOSTAWIAM
 	fclose(s);
 	return 0;
 }
@@ -261,26 +199,13 @@ int MakeColorTable()
 			t++;
 		}
 	}
-	/*
-	for (int i = 0; i < t; i++)
-	{
-	cout << i << ". " << ColorTable[i].Red << ":" << ColorTable[i].Green << ":" << ColorTable[i].Blue << endl;
-	}*/
 	return t;
 }
 
 int konwerterClass::konwerter(char* path)
 {
 	ReadBMP(path);
-
-	for (int x = 0; x < bih.Height*bih.Width * 3; x += 3)
-	{
-		//cout << (int)Pixels[x + 2] << ":" << (int)Pixels[x + 1] << ":" << (int)Pixels[x] << " ";
-	}
 	int t = MakeColorTable();
-	//SaveFile(t);
-
-	//cout << endl;
 	return 0;
 }
 
