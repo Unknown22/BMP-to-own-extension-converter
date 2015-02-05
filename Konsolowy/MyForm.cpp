@@ -1,4 +1,5 @@
 #include "MyForm.h"
+#include "MainHeader.h"
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,7 +65,7 @@ void ReadBMP(char* path)
 		unsigned char pad[4] = { 0 };
 		unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
 		fseek(f, bih.OffBits, SEEK_SET);
-		for (unsigned int i = 0; i < bih.Height; ++i)
+		for (int i = 0; i < bih.Height; ++i)
 		{
 			fread(Pixels + i * bih.Width * 3, (size_t)1, (size_t)bih.Width * 3, f);
 			fread(&pad, 1, padding, f);
@@ -74,7 +75,37 @@ void ReadBMP(char* path)
 	fclose(f);
 }
 
-int saveFileClass::saveFile(char* path)
+int MakeColorTable()
+{
+	RGBPixel CheckColor;
+	int m = 0; //okresla czy kolor byl juz w tablicy, 0 - nie byl, 1 - byl
+	for (int i = 0; i < bih.Height*bih.Width * 3; i += 3)
+	{
+		m = 0;
+		CheckColor.Red = (int)Pixels[i + 2];
+		CheckColor.Green = (int)Pixels[i + 1];
+		CheckColor.Blue = (int)Pixels[i];
+		for (int x = 0; x < t; x++)
+		{
+			if (ColorTable[x].Red == CheckColor.Red &&
+				ColorTable[x].Green == CheckColor.Green &&
+				ColorTable[x].Blue == CheckColor.Blue)
+			{
+				m = 1;
+			}
+		}
+		if (m != 1)
+		{
+			ColorTable[t].Red = CheckColor.Red;
+			ColorTable[t].Green = CheckColor.Green;
+			ColorTable[t].Blue = CheckColor.Blue;
+			t++;
+		}
+	}
+	return t;
+}
+
+int ConvertToMMSS::saveFile(char* path)
 {
 	int lastColor = -1;
 	int colorCount = 0;
@@ -157,7 +188,7 @@ int saveFileClass::saveFile(char* path)
 	
 	unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
 	fseek(s, bih.OffBits, SEEK_SET);
-	for (unsigned int cc = 0; cc < j; cc++)
+	for (int cc = 0; cc < j; cc++)
 	{
 		fwrite(ColorsToSave + cc, (size_t)sizeof(Byte), (size_t)1, s);
 	}
@@ -172,45 +203,36 @@ int saveFileClass::saveFile(char* path)
 	return 0;
 }
 
-int MakeColorTable()
+int ConvertToMMSS::ReadAndPrepare(char* path)
 {
-	RGBPixel CheckColor;
-	int m = 0; //okresla czy kolor byl juz w tablicy, 0 - nie byl, 1 - byl
-	for (int i = 0; i < bih.Height*bih.Width * 3; i += 3)
+	try
 	{
-		m = 0;
-		CheckColor.Red = (int)Pixels[i + 2];
-		CheckColor.Green = (int)Pixels[i + 1];
-		CheckColor.Blue = (int)Pixels[i];
-		for (int x = 0; x < t; x++)
-		{
-			if (ColorTable[x].Red == CheckColor.Red &&
-				ColorTable[x].Green == CheckColor.Green &&
-				ColorTable[x].Blue == CheckColor.Blue)
-			{
-				m = 1;
-			}
-		}
-		if (m != 1)
-		{
-			ColorTable[t].Red = CheckColor.Red;
-			ColorTable[t].Green = CheckColor.Green;
-			ColorTable[t].Blue = CheckColor.Blue;
-			t++;
-		}
+		ReadBMP(path);
+		t = MakeColorTable();
+		return 0;
 	}
-	return t;
+	catch(exception ex)
+	{
+		System::String^ error = gcnew String(ex.what());
+		MessageBox::Show(error);
+		return -1;
+	}
 }
 
-int konwerterClass::konwerter(char* path)
+int ConvertToBMP::ReadAndPrepare(char* path)
 {
-	ReadBMP(path);
-	int t = MakeColorTable();
+	MessageBox::Show("KK1");
+	return 0;
+}
+
+int ConvertToBMP::saveFile(char* path)
+{
+	MessageBox::Show("KK2");
 	return 0;
 }
 
 [STAThread]
-void main(array<String^>^ args) {
+void main(array<String^>^ argv) {
 	Application::EnableVisualStyles();
 	Application::SetCompatibleTextRenderingDefault(false);
 

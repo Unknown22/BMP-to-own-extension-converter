@@ -1,17 +1,5 @@
 #pragma once
-
-
-class konwerterClass
-{
-public:
-	int konwerter(char* path);
-};
-
-class saveFileClass
-{
-public:
-	int saveFile(char* path);
-};
+#include "MainHeader.h"
 
 namespace Konsolowy {
 
@@ -62,6 +50,12 @@ namespace Konsolowy {
 	private: System::Windows::Forms::OpenFileDialog^  openFile1;
 	private: System::Windows::Forms::Button^  button2;
 	private: System::Windows::Forms::SaveFileDialog^  saveFile1;
+	private: System::Windows::Forms::Button^  button3;
+	private: System::Windows::Forms::Button^  button4;
+	private: System::Windows::Forms::TextBox^  textBox3;
+	private: System::Windows::Forms::Label^  label2;
+	private: System::Windows::Forms::OpenFileDialog^  openFileDialog1;
+	private: System::Windows::Forms::SaveFileDialog^  saveFileDialog1;
 
 
 
@@ -85,11 +79,18 @@ namespace Konsolowy {
 			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
 			this->label1 = (gcnew System::Windows::Forms::Label());
 			this->tabPage2 = (gcnew System::Windows::Forms::TabPage());
+			this->button3 = (gcnew System::Windows::Forms::Button());
+			this->button4 = (gcnew System::Windows::Forms::Button());
+			this->textBox3 = (gcnew System::Windows::Forms::TextBox());
+			this->label2 = (gcnew System::Windows::Forms::Label());
 			this->tabPage3 = (gcnew System::Windows::Forms::TabPage());
 			this->openFile1 = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->saveFile1 = (gcnew System::Windows::Forms::SaveFileDialog());
+			this->openFileDialog1 = (gcnew System::Windows::Forms::OpenFileDialog());
+			this->saveFileDialog1 = (gcnew System::Windows::Forms::SaveFileDialog());
 			this->tabControl1->SuspendLayout();
 			this->tabPage1->SuspendLayout();
+			this->tabPage2->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// tabControl1
@@ -144,7 +145,6 @@ namespace Konsolowy {
 			this->textBox1->Name = L"textBox1";
 			this->textBox1->Size = System::Drawing::Size(189, 20);
 			this->textBox1->TabIndex = 1;
-			this->textBox1->TextChanged += gcnew System::EventHandler(this, &MyForm::textBox1_TextChanged);
 			// 
 			// label1
 			// 
@@ -154,10 +154,13 @@ namespace Konsolowy {
 			this->label1->Size = System::Drawing::Size(67, 13);
 			this->label1->TabIndex = 0;
 			this->label1->Text = L"Wybierz plik:";
-			this->label1->Click += gcnew System::EventHandler(this, &MyForm::label1_Click);
 			// 
 			// tabPage2
 			// 
+			this->tabPage2->Controls->Add(this->button3);
+			this->tabPage2->Controls->Add(this->button4);
+			this->tabPage2->Controls->Add(this->textBox3);
+			this->tabPage2->Controls->Add(this->label2);
 			this->tabPage2->Location = System::Drawing::Point(4, 22);
 			this->tabPage2->Name = L"tabPage2";
 			this->tabPage2->Padding = System::Windows::Forms::Padding(3);
@@ -165,6 +168,43 @@ namespace Konsolowy {
 			this->tabPage2->TabIndex = 1;
 			this->tabPage2->Text = L"MMSS -> BMP";
 			this->tabPage2->UseVisualStyleBackColor = true;
+			// 
+			// button3
+			// 
+			this->button3->Location = System::Drawing::Point(71, 181);
+			this->button3->Name = L"button3";
+			this->button3->Size = System::Drawing::Size(112, 23);
+			this->button3->TabIndex = 7;
+			this->button3->Text = L"Konwertuj i zapisz";
+			this->button3->UseVisualStyleBackColor = true;
+			this->button3->Click += gcnew System::EventHandler(this, &MyForm::button3_Click);
+			// 
+			// button4
+			// 
+			this->button4->Location = System::Drawing::Point(201, 23);
+			this->button4->Name = L"button4";
+			this->button4->Size = System::Drawing::Size(45, 23);
+			this->button4->TabIndex = 6;
+			this->button4->Text = L"...";
+			this->button4->UseVisualStyleBackColor = true;
+			this->button4->Click += gcnew System::EventHandler(this, &MyForm::button4_Click);
+			// 
+			// textBox3
+			// 
+			this->textBox3->Enabled = false;
+			this->textBox3->Location = System::Drawing::Point(5, 23);
+			this->textBox3->Name = L"textBox3";
+			this->textBox3->Size = System::Drawing::Size(189, 20);
+			this->textBox3->TabIndex = 5;
+			// 
+			// label2
+			// 
+			this->label2->AutoSize = true;
+			this->label2->Location = System::Drawing::Point(5, 6);
+			this->label2->Name = L"label2";
+			this->label2->Size = System::Drawing::Size(67, 13);
+			this->label2->TabIndex = 4;
+			this->label2->Text = L"Wybierz plik:";
 			// 
 			// tabPage3
 			// 
@@ -179,12 +219,21 @@ namespace Konsolowy {
 			// 
 			this->openFile1->FileName = L"Wybierz plik...";
 			this->openFile1->Filter = L"Mapa bitowa 6-bitowa (*.bmp)|*.bmp";
-			this->openFile1->FileOk += gcnew System::ComponentModel::CancelEventHandler(this, &MyForm::openFileDialog1_FileOk);
 			// 
 			// saveFile1
 			// 
 			this->saveFile1->FileName = L"image.mmss";
 			this->saveFile1->Filter = L"Rozszerzenie graficzne typu MMSS (*.mmss)|*.mmss";
+			// 
+			// openFileDialog1
+			// 
+			this->openFileDialog1->FileName = L"Wybierz plik...";
+			this->openFileDialog1->Filter = L"Rozszerzenie graficzne typu MMSS (*.mmss)|*.mmss";
+			// 
+			// saveFileDialog1
+			// 
+			this->saveFileDialog1->FileName = L"image.bmp";
+			this->saveFileDialog1->Filter = L"Mapa bitowa 6-bitowa (*.bmp)|*.bmp";
 			// 
 			// MyForm
 			// 
@@ -197,20 +246,12 @@ namespace Konsolowy {
 			this->tabControl1->ResumeLayout(false);
 			this->tabPage1->ResumeLayout(false);
 			this->tabPage1->PerformLayout();
+			this->tabPage2->ResumeLayout(false);
+			this->tabPage2->PerformLayout();
 			this->ResumeLayout(false);
 
 		}
 #pragma endregion
-
-	private: System::Void label1_Click(System::Object^  sender, System::EventArgs^  e)
-	{
-
-	}
-
-	private: System::Void textBox1_TextChanged(System::Object^  sender, System::EventArgs^  e)
-	{
-
-	}
 
 	private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e)
 	{
@@ -219,26 +260,46 @@ namespace Konsolowy {
 				 textBox1->Text = path1;
 	}
 
-	private: System::Void openFileDialog1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e)
-	{
-
-	}
 	private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
 				 //konwersja
-				 konwerterClass cl;
+				 ConvertToMMSS cl;
 				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
-				 int k = cl.konwerter(pathChar);
-				 
+				 int k = cl.ReadAndPrepare(pathChar);
 				 if (k == 0)
 				 {
 					 //zapisywanie
 					 saveFile1->ShowDialog();
-					 saveFileClass save;
 					 System::String ^path2 = saveFile1->FileName;
 					 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
-					 int m = save.saveFile(pathSave);
-					 MessageBox::Show("Konwersja zakonczona");
+					 int m = cl.saveFile(pathSave);
+					 if (m == 0){
+						 MessageBox::Show("Konwersja zakonczona");
+					 }
 				 }
 	}
+private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) 
+{
+	ConvertToBMP bmpC;
+	char* pathChar2 = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox3->Text);
+	int k = bmpC.ReadAndPrepare(pathChar2);
+	if (k == 0)
+	{
+		//zapisywanie
+		saveFileDialog1->ShowDialog();
+		System::String ^path3 = saveFileDialog1->FileName;
+		char* pathSave1 = (char*)(void*)Marshal::StringToHGlobalAnsi(path3);
+		int m = bmpC.saveFile(pathSave1);
+		if (m == 0){
+			MessageBox::Show("Konwersja zakonczona");
+		}
+	}
+}
+private: System::Void button4_Click(System::Object^  sender, System::EventArgs^  e) 
+{
+	openFileDialog1->ShowDialog();
+	System::String ^path3 = openFileDialog1->FileName;
+	textBox3->Text = path3;
+	//WYBIERZ PLIK
+}
 };
 }
