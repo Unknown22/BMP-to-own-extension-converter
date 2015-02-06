@@ -401,6 +401,9 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 	unsigned char* output = new unsigned char[outputSize];
 	switch (msih.Compression)
 	{
+	case 0:
+		output = colorsToProcess;
+		break;
 		//sub
 	case 1:
 		output[0] = colorsToProcess[0];
@@ -417,7 +420,7 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 		}
 		for (int j = msih.Width; j < outputSize; ++j)
 		{
-			output[j] = colorsToProcess[j] + colorsToProcess[j - msih.Width] - 64;
+			output[j] = colorsToProcess[j] + colorsToProcess[j - msih.Width];
 		}
 		break;
 		//average
@@ -613,6 +616,7 @@ int ConvertToBMP::saveFile(char* path)
 		fwrite(&ColorTable[decodedPredictors[k]].Red, (size_t)sizeof(Byte), (size_t)1, s);
 		fwrite(&ColorTable[decodedPredictors[k]].Green, (size_t)sizeof(Byte), (size_t)1, s);
 		fwrite(&ColorTable[decodedPredictors[k]].Blue, (size_t)sizeof(Byte), (size_t)1, s);
+		fwrite("\0", 1, padding, s);
 	}
 	
 		/*
