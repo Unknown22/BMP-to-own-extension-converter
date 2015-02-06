@@ -613,10 +613,16 @@ int ConvertToBMP::saveFile(char* path)
 
 	for (k = 0; k < msih.Height*msih.Width; k++)
 	{
-		fwrite(&ColorTable[decodedPredictors[k]].Red, (size_t)sizeof(Byte), (size_t)1, s);
+		unsigned char* test = new unsigned char[3];
+		test[0] = ColorTable[decodedPredictors[k]].Red;
+		test[1] = ColorTable[decodedPredictors[k]].Green;
+		test[2] = ColorTable[decodedPredictors[k]].Blue;
+		fwrite(&test, (size_t)sizeof(test), (size_t)1, s);
+		/*fwrite(&ColorTable[decodedPredictors[k]].Red, (size_t)sizeof(Byte), (size_t)1, s);
 		fwrite(&ColorTable[decodedPredictors[k]].Green, (size_t)sizeof(Byte), (size_t)1, s);
-		fwrite(&ColorTable[decodedPredictors[k]].Blue, (size_t)sizeof(Byte), (size_t)1, s);
-		fwrite("\0", 1, padding, s);
+		fwrite(&ColorTable[decodedPredictors[k]].Blue, (size_t)sizeof(Byte), (size_t)1, s);*/
+		if (k % msih.Width == 0)
+			fwrite("\0", 1, padding, s);
 	}
 	
 		/*
