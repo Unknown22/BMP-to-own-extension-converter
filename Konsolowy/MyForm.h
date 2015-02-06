@@ -279,6 +279,7 @@ namespace Konsolowy {
 			this->listBox1->Size = System::Drawing::Size(120, 69);
 			this->listBox1->TabIndex = 5;
 			this->listBox1->SelectedIndexChanged += gcnew System::EventHandler(this, &MyForm::listBox1_SelectedIndexChanged);
+			this->listBox1->SelectedIndex = 0;
 			// 
 			// label3
 			// 
@@ -459,6 +460,8 @@ namespace Konsolowy {
 						 saveFile1->ShowDialog();
 						 if (saveFile1->FileName != "")
 						 {
+							 GetPredictor gpr;
+							 gpr.getPr(listBox1->SelectedIndex);
 							 System::String ^path2 = saveFile1->FileName;
 							 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
 							 int m = cl.saveFile(pathSave);
@@ -536,5 +539,8 @@ private: System::Void radioButton2_CheckedChanged(System::Object^  sender, Syste
 }
 private: System::Void saveFile1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e) {
 }
+
 };
+
 }
+

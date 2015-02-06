@@ -25,3 +25,9 @@ class info
 public:
 	infoAboutImage GetInfo(char* path);
 };
+
+class GetPredictor
+{
+public:
+	void getPr(int num);
+};
