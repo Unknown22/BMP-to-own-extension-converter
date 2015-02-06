@@ -200,17 +200,19 @@ void ReadMMSS(char* path)
 
 		int filesize = GetFileSize();
 
-		int padding = filesize - msih.OffBits - (msih.ColorsUsed * 6);
+		int padding = filesize - msih.OffBits - (msih.ColorsUsed * 3);
 
 		fseek(f, msih.OffBits, SEEK_SET);
-		int* tempColors = new int[msih.ColorsUsed * 6];
+		int* tempColors = new int[msih.ColorsUsed * 3];
 
-		for (int i = 0; i < msih.ColorsUsed * 6; i++)
+		for (int i = 0; i < msih.ColorsUsed * 3; i++)
 		{
 			fread(tempColors + i, (size_t)sizeof(Byte), 1, f);
 		}
+
 		int counter = 0;
-		for (int i = 0; i < msih.ColorsUsed * 6; i + 3)
+
+		for (int i = 0; i < msih.ColorsUsed * 3; i+=3)
 		{
 			ColorTable[counter].Red = tempColors[i];
 			ColorTable[counter].Green = tempColors[i + 1];
@@ -218,7 +220,7 @@ void ReadMMSS(char* path)
 			counter++;
 		}
 
-		fseek(f, msih.OffBits + (msih.ColorsUsed * 6), SEEK_SET);
+		fseek(f, msih.OffBits + (msih.ColorsUsed * 3), SEEK_SET);
 		compressedIMG = new int[padding];
 		for (int i = 0; i < padding; ++i)
 		{
@@ -230,13 +232,38 @@ void ReadMMSS(char* path)
 
 unsigned char* decompress()
 {
+	int q = 0;
 	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height];
-	int cnt = 0;
-	for (int i = 0; i < msih.Width*msih.Height * 3; i + 2)
+	
+	int length = sizeof(compressedIMG) / sizeof(*compressedIMG);
+
+	int i = 0;
+
+	//dopoki wszystkie bajty nie sa zdekompresowane
+	while (i < length)
 	{
-		for (int j = 0; j < compressedIMG[i]; j++)
+		//kod pusty
+		if (compressedIMG[i] == -128)
 		{
-			decompressedIMG[cnt++] = compressedIMG[i + 1];
+			i++;
+		}
+		//sekwencja powtarzajacych sie bajtow
+		else if (compressedIMG[i] < 0)
+		{
+			for (int j = 0; j<-(compressedIMG[i] - 1); j++)
+			{
+				decompressedIMG[q++] = (int)compressedIMG[i + 1];
+			}
+			i += 2;
+		}
+		//sekwencja roznych bajtow
+		else
+		{
+			for (int j = 0; j<(compressedIMG[i] + 1); j++)
+			{
+				decompressedIMG[q++] = (int)compressedIMG[i + 1 + j];
+			}
+			i += compressedIMG[i] + 2;
 		}
 	}
 	return decompressedIMG;
@@ -307,48 +334,46 @@ int* getPredictor(int* colorsToProcess)
 		output[0] = colorsToProcess[0];
 		for (int i = 1; i < lengthOfColors; i++)
 		{
-			output[i] = colorsToProcess[i] - colorsToProcess[i-1]+64; //+64 zeby na wyjsciu byly tylko dodatnie wartosci, przy dekodowaniu trzeba odjac 64
+			output[i] = colorsToProcess[i] - colorsToProcess[i - 1];
 		}
 		//sub
 		break;
 	case 2:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i] + 64;
+			output[i] = colorsToProcess[i];
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
-		{	
-			output[j] = colorsToProcess[j] - colorsToProcess[j - bih.Width] + 64; //jak wyzej
+		{
+			output[j] = colorsToProcess[j] - colorsToProcess[j - bih.Width];
 		}
 		//up
 		break;
 	case 3:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i] + 64;
+			output[i] = colorsToProcess[i];
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{
-			output[j] = colorsToProcess[j] - Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width]) / 2) + 64; //jak wyzej
+			output[j] = colorsToProcess[j] - Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width]) / 2);
 		}
 		//average
 		break;
 	case 4:
 		for (int i = 0; i < bih.Width; ++i)
 		{
-			output[i] = colorsToProcess[i] + 64; //jak wyzej
+			output[i] = colorsToProcess[i];
 		}
 		for (int j = bih.Width; j < lengthOfColors; ++j)
 		{
 			output[j] = output[j] - PaethPredictor(colorsToProcess[j],
-									colorsToProcess[j-bih.Width],
-									colorsToProcess[j - bih.Width - 1]) + 64; //jak wyzej
+				colorsToProcess[j - bih.Width],
+				colorsToProcess[j - bih.Width - 1]);
 		}
 		//paeth
 		break;
 	}
-
-
 	return output;
 }
 
@@ -411,37 +436,57 @@ unsigned char* compress()
 	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width*2];
 	int* colorsTemp = rawToColors(Pixels);
 	int* colors = getPredictor(colorsTemp);
-	int lastColor = colors[0];
-	int colorCount = 0;
-	
-	for (int q = 0; q < lengthOfColors; q++){
-		if (colors[q] != lastColor)
-		{
+	int i = 0;
 
-			//nowy kolor
-			//Przy dekodowaniu braæ 1-colorCount
-			ToSave[k++] = colorCount;
-			ToSave[k++] = lastColor;
-			colorCount = 0;
-			lastColor = colors[q];
+	//dopoki wszystkie bajty nie sa skompresowane
+	while (i < lengthOfColors)
+	{
+		//sekwencja powtarzajacych sie bajtow
+		if ((i < lengthOfColors - 1) &&
+			(colors[i] == colors[i + 1]))
+		{
+			//zmierz dlugosc sekwencji
+			int j = 0;
+			while ((i + j < lengthOfColors - 1) &&
+				(colors[i + j] == colors[i + j + 1]) &&
+				(j < 127))
+			{
+				j++;
+			}
+			//wypisz spakowana sekwencje
+			ToSave[k++] = -j + 64;
+			ToSave[k++] = (int)colors[i + j];
+
+			//przesun wskaznik o dlugosc sekwencji
+			i += (j + 1);
 		}
+		//sekwencja roznych bajtow
 		else
 		{
-			//stary kolor
-			if (colorCount < 128)
+			//zmierz dlugosc sekwencji
+			int j = 0;
+			while ((i + j < lengthOfColors - 1) &&
+				(colors[i + j] != colors[j + i + 1]) &&
+				(j < 128))
 			{
-				colorCount++;
+				j++;
 			}
-			else
+			//dodaj jeszcze koncowke
+			if ((i + j == lengthOfColors - 1) &&
+				(j < 128))
 			{
-				//Przy dekodowaniu braæ 1-colorCount
-				ToSave[k++] = colorCount;
-				ToSave[k++] = lastColor;
-				colorCount = 0;
+				j++;
 			}
+			//wypisz spakowana sekwencje
+			ToSave[k++] = (j-1) + 64;
+			for (int k = 0; k<j; k++)
+			{
+				ToSave[k++] = (int)colors[i + k];
+			}
+			//przesun wskaznik o dlugosc sekwencji
+			i += j;
 		}
-	}
-				
+	}				
 	return ToSave;
 }
 
