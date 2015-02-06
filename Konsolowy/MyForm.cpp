@@ -62,6 +62,7 @@ int t = 0; //indeks w tabeli kolorów
 int k = 0; //licznik d³ugoœci skompresowanych danych
 int lengthOfColors = 0;//licznik d³ugoœci nieskompresowanych kolorów
 int predictorName = 0;
+int* compressedIMG;
 
 void GetPredictor::getPr(int num)
 {
@@ -138,33 +139,6 @@ int MakeColorTable()
 	return t;
 }
 
-void ReadMMSS(char* path)
-{
-	f = fopen(path, "rb");
-	if (f != NULL)
-	{
-		fread(&msih, sizeof(MMSSInfoHeader), 1, f);
-		if (msih.MMSSType != 21325)
-		{
-			fclose(f);
-			return;
-		}
-
-		unsigned int mallocSize = msih.Height * msih.Width * 3;
-		Pixels = (unsigned char *)malloc(mallocSize * sizeof(unsigned char));
-		unsigned char pad[4] = { 0 };
-		unsigned int padding = (4 - ((msih.Width * 3) % 4)) % 4;
-		fseek(f, msih.OffBits, SEEK_SET);
-		for (int i = 0; i < msih.Height; ++i)
-		{
-			fread(Pixels + i * msih.Width * 3, (size_t)1, (size_t)msih.Width * 3, f);
-			fread(&pad, 1, padding, f);
-		}
-		//cout << "Test: wczytano" << endl;
-	}
-	fclose(f);
-}
-
 void ReadBMP(char* path)
 {
 	f = fopen(path, "rb");
@@ -193,6 +167,62 @@ void ReadBMP(char* path)
 	}
 
 	fclose(f);
+}
+
+void ReadMMSS(char* path)
+{
+	f = fopen(path, "rb");
+	if (f != NULL)
+	{
+		fread(&msih, sizeof(MMSSInfoHeader), 1, f);
+		if (msih.MMSSType != 21325)
+		{
+			fclose(f);
+			return;
+		}
+
+		int filesize = GetFileSize();
+
+		int padding = filesize - msih.OffBits - (msih.ColorsUsed * 6);
+
+		fseek(f, msih.OffBits, SEEK_SET);
+		int* tempColors = new int[msih.ColorsUsed * 6];
+
+		for (int i = 0; i < msih.ColorsUsed * 6; i++)
+		{
+			fread(tempColors + i, (size_t)sizeof(Byte), 1, f);
+		}
+		int counter = 0;
+		for (int i = 0; i < msih.ColorsUsed * 6; i + 3)
+		{
+			ColorTable[counter].Red = tempColors[i];
+			ColorTable[counter].Green = tempColors[i + 1];
+			ColorTable[counter].Blue = tempColors[i + 2];
+			counter++;
+		}
+
+		fseek(f, msih.OffBits + (msih.ColorsUsed * 6), SEEK_SET);
+		compressedIMG = new int[padding];
+		for (int i = 0; i < padding; ++i)
+		{
+			fread(compressedIMG + i, (size_t)sizeof(Byte), 1, f);
+		}
+	}
+	fclose(f);
+}
+
+unsigned char* decompress()
+{
+	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height * 3];
+	int cnt = 0;
+	for (int i = 0; i < msih.Width*msih.Height * 3; i + 2)
+	{
+		for (int j = 0; j < compressedIMG[i]; j++)
+		{
+			decompressedIMG[cnt++] = compressedIMG[i + 1];
+		}
+	}
+	return decompressedIMG;
 }
 
 int ConvertToMMSS::ReadAndPrepare(char* path)
