@@ -260,7 +260,7 @@ int* getPredictor(int* colorsToProcess)
 		output[0] = colorsToProcess[0];
 		for (int i = 1; i < lengthOfColors; i++)
 		{
-			output[i] = colorsToProcess[i] - colorsToProcess[i-1]+64; //+64 zeby na wyjsciu byly tylko dodatnie wartosci, przy dekodowaniu trzeba odjac 64
+			output[i] = colorsToProcess[i] - colorsToProcess[i-1] + 64; //+64 zeby na wyjsciu byly tylko dodatnie wartosci, przy dekodowaniu trzeba odjac 64
 		}
 		//sub
 		break;
