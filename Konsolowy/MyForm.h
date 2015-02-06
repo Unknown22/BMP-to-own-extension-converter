@@ -433,6 +433,7 @@ namespace Konsolowy {
 				 info i;
 				 ConvertToMMSS cl;
 				 infoAboutImage x;
+				 GetColorIndicator ci;
 				 openFile1->ShowDialog();
 				 if (openFile1->FileName != "Wybierz plik...")
 				 {
@@ -444,6 +445,10 @@ namespace Konsolowy {
 					 label8->Text = System::Convert::ToString(x.width);
 					 label10->Text = System::Convert::ToString(x.height);
 					 label12->Text = System::Convert::ToString(x.colors);
+					 if (radioButton1->Checked == 1)
+						 ci.getCi(0);
+					 else
+						 ci.getCi(1);
 				 }
 	}
 
@@ -526,16 +531,26 @@ private: System::Void listBox1_SelectedIndexChanged(System::Object^  sender, Sys
 private: System::Void label7_Click(System::Object^  sender, System::EventArgs^  e) {
 }
 private: System::Void radioButton1_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
+			 GetColorIndicator ci;
 			 if (radioButton1->Checked == 1)
 			 {
 				 radioButton2->Checked = 0;
 			 }
+			 if (radioButton1->Checked == 1)
+				 ci.getCi(0);
+			 else
+				 ci.getCi(1);
 }
 private: System::Void radioButton2_CheckedChanged(System::Object^  sender, System::EventArgs^  e) {
+			 GetColorIndicator ci;
 			 if (radioButton2->Checked == 1)
 			 {
 				 radioButton1->Checked = 0;
 			 }
+			 if (radioButton1->Checked == 1)
+				 ci.getCi(0);
+			 else
+				 ci.getCi(1);
 }
 private: System::Void saveFile1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e) {
 }
