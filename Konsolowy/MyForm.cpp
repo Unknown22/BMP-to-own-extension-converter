@@ -267,7 +267,7 @@ int* getPredictor(int* colorsToProcess)
 	case 2:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64;
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{	
@@ -278,7 +278,7 @@ int* getPredictor(int* colorsToProcess)
 	case 3:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64;
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{
@@ -293,7 +293,7 @@ int* getPredictor(int* colorsToProcess)
 		}
 		for (int j = bih.Width; j < lengthOfColors; ++j)
 		{
-			output[j] = PaethPredictor(colorsToProcess[j],
+			output[j] = output[j] - PaethPredictor(colorsToProcess[j],
 									colorsToProcess[j-bih.Width],
 									colorsToProcess[j - bih.Width - 1]) + 64; //jak wyzej
 		}
@@ -302,6 +302,59 @@ int* getPredictor(int* colorsToProcess)
 	}
 
 
+	return output;
+}
+
+int* DecodePredictor(int* colorsToProcess)
+{
+	int outputSize = sizeof(colorsToProcess) / sizeof(*colorsToProcess);
+	int* output = new int[outputSize];
+	switch (predictorName)
+	{
+		//sub
+	case 1:
+		output[0] = colorsToProcess[0];
+		for (int i = 1; i < outputSize; ++i)
+		{
+			output[i] = colorsToProcess[i] + colorsToProcess[i + 1] - 64;
+		}
+		break;
+		//up
+	case 2:
+		for (int i = 0; i < bih.Width; ++i)
+		{
+			output[i] = colorsToProcess[i] - 64;
+		}
+		for (int j = bih.Width; j < outputSize; ++j)
+		{
+			output[j] = colorsToProcess[j] + colorsToProcess[j - bih.Width] - 64;
+		}
+		break;
+		//average
+	case 3:
+		for (int i = 0; i < bih.Width; ++i)
+		{
+			output[i] = colorsToProcess[i] - 64;
+		}
+		for (int j = bih.Width; j < outputSize; ++j)
+		{
+			output[j] = colorsToProcess[j] + Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width]) / 2) - 64;
+		}
+		break;
+		//paeth
+	case 4:
+		for (int i = 0; i < bih.Width; ++i)
+		{
+			output[i] = colorsToProcess[i] - 64;
+		}
+		for (int j = bih.Width; j < outputSize; ++j)
+		{
+			output[j] = output[j] + PaethPredictor(colorsToProcess[j],
+				colorsToProcess[j - bih.Width],
+				colorsToProcess[j - bih.Width - 1]) - 64;
+		}
+		break;
+	}
 	return output;
 }
 
