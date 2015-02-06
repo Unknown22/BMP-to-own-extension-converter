@@ -396,8 +396,8 @@ namespace Konsolowy {
 			// 
 			// saveFile1
 			// 
-			this->saveFile1->FileName = L"image.mmss";
 			this->saveFile1->Filter = L"Rozszerzenie graficzne typu MMSS (*.mmss)|*.mmss";
+			this->saveFile1->FileOk += gcnew System::ComponentModel::CancelEventHandler(this, &MyForm::saveFile1_FileOk);
 			// 
 			// openFileDialog1
 			// 
@@ -406,7 +406,6 @@ namespace Konsolowy {
 			// 
 			// saveFileDialog1
 			// 
-			this->saveFileDialog1->FileName = L"image.bmp";
 			this->saveFileDialog1->Filter = L"Mapa bitowa 6-bitowa (*.bmp)|*.bmp";
 			// 
 			// MyForm
@@ -434,55 +433,77 @@ namespace Konsolowy {
 				 ConvertToMMSS cl;
 				 infoAboutImage x;
 				 openFile1->ShowDialog();
-				 System::String ^path1 = openFile1->FileName;
-				 textBox1->Text = path1;
-				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
-				 int k = cl.ReadAndPrepare(pathChar);
-				 x = i.GetInfo(pathChar);
-				 label8->Text = System::Convert::ToString(x.width);
-				 label10->Text = System::Convert::ToString(x.height);
-				 label12->Text = System::Convert::ToString(x.colors);
+				 if (openFile1->FileName != "Wybierz plik...")
+				 {
+					 System::String ^path1 = openFile1->FileName;
+					 textBox1->Text = path1;
+					 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
+					 int k = cl.ReadAndPrepare(pathChar);
+					 x = i.GetInfo(pathChar);
+					 label8->Text = System::Convert::ToString(x.width);
+					 label10->Text = System::Convert::ToString(x.height);
+					 label12->Text = System::Convert::ToString(x.colors);
+				 }
 	}
 
 	private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
 				 //konwersja
-				 ConvertToMMSS cl;
-				 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
-				 int k = cl.ReadAndPrepare(pathChar);
-				 if (k == 0)
+				 if (textBox1->Text != "")
 				 {
-					 //zapisywanie
-					 saveFile1->ShowDialog();
-					 System::String ^path2 = saveFile1->FileName;
-					 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
-					 int m = cl.saveFile(pathSave);
-					 if (m == 0){
-						 MessageBox::Show("Konwersja zakonczona");
+					 ConvertToMMSS cl;
+					 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
+					 int k = cl.ReadAndPrepare(pathChar);
+					 if (k == 0)
+					 {
+						 //zapisywanie
+						 saveFile1->ShowDialog();
+						 if (saveFile1->FileName != "")
+						 {
+							 System::String ^path2 = saveFile1->FileName;
+							 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
+							 int m = cl.saveFile(pathSave);
+							 if (m == 0){
+								 MessageBox::Show("Konwersja zakonczona");
+							 }
+						 }
 					 }
 				 }
+				 else
+					 MessageBox::Show("Nie wybrales zadnego pliku");
 	}
 private: System::Void button3_Click(System::Object^  sender, System::EventArgs^  e) 
 {
-	ConvertToBMP bmpC;
-	char* pathChar2 = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox3->Text);
-	int k = bmpC.ReadAndPrepare(pathChar2);
-	if (k == 0)
-	{
-		//zapisywanie
-		saveFileDialog1->ShowDialog();
-		System::String ^path3 = saveFileDialog1->FileName;
-		char* pathSave1 = (char*)(void*)Marshal::StringToHGlobalAnsi(path3);
-		int m = bmpC.saveFile(pathSave1);
-		if (m == 0){
-			MessageBox::Show("Konwersja zakonczona");
-		}
-	}
+			 if (textBox3->Text != "")
+			 {
+				 ConvertToBMP bmpC;
+				 char* pathChar2 = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox3->Text);
+				 int k = bmpC.ReadAndPrepare(pathChar2);
+				 if (k == 0)
+				 {
+					 //zapisywanie
+					 saveFileDialog1->ShowDialog();
+					 if (saveFileDialog1->FileName != "")
+					 {
+						 System::String ^path3 = saveFileDialog1->FileName;
+						 char* pathSave1 = (char*)(void*)Marshal::StringToHGlobalAnsi(path3);
+						 int m = bmpC.saveFile(pathSave1);
+						 if (m == 0){
+							 MessageBox::Show("Konwersja zakonczona");
+						 }
+					 }
+				 }
+			 }
+			 else
+				 MessageBox::Show("Nie wybrales zadnego pliku");
 }
 private: System::Void button4_Click(System::Object^  sender, System::EventArgs^  e) 
 {
 	openFileDialog1->ShowDialog();
-	System::String ^path3 = openFileDialog1->FileName;
-	textBox3->Text = path3;
+	if (openFileDialog1->FileName != "Wybierz plik...")
+	{
+		System::String ^path3 = openFileDialog1->FileName;
+		textBox3->Text = path3;
+	}
 	//WYBIERZ PLIK
 }
 private: System::Void textBox1_TextChanged(System::Object^  sender, System::EventArgs^  e) {
@@ -512,6 +533,8 @@ private: System::Void radioButton2_CheckedChanged(System::Object^  sender, Syste
 			 {
 				 radioButton1->Checked = 0;
 			 }
+}
+private: System::Void saveFile1_FileOk(System::Object^  sender, System::ComponentModel::CancelEventArgs^  e) {
 }
 };
 }

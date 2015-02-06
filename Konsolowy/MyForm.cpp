@@ -3,7 +3,6 @@
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 #include <msclr/marshal_cppstd.h>
 
 using namespace std;
@@ -153,7 +152,7 @@ void ReadMMSS(char* path)
 			fread(Pixels + i * msih.Width * 3, (size_t)1, (size_t)msih.Width * 3, f);
 			fread(&pad, 1, padding, f);
 		}
-		cout << "Test: wczytano" << endl;
+		//cout << "Test: wczytano" << endl;
 	}
 	fclose(f);
 }
@@ -180,7 +179,7 @@ void ReadBMP(char* path)
 			fread(Pixels + i * bih.Width * 3, (size_t)1, (size_t)bih.Width * 3, f);
 			fread(&pad, 1, padding, f);
 		}
-		cout << "Test: wczytano" << endl;
+		//cout << "Test: wczytano" << endl;
 	}
 
 	fclose(f);
