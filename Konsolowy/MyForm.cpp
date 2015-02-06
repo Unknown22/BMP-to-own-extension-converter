@@ -222,6 +222,24 @@ int* rawToColors(unsigned char* PixelsTable)//zamienia surowe piksele na tablice
 	return colors;
 }
 
+int PaethPredictor(int a, int b, int c)
+{
+	int p = a + b - c;
+	int pa = Math::Abs(p - a);
+	int pb = Math::Abs(p - b);
+	int pc = Math::Abs(p - c);
+	if (pa <= pb && pa <= pc)
+	{
+		return a;
+	}
+	else if (pb <= pc)
+	{
+		return b;
+	}
+	else
+		return c;
+}
+
 int* getPredictor(int* colorsToProcess)
 {
 	int* output = new int[lengthOfColors];
@@ -261,7 +279,16 @@ int* getPredictor(int* colorsToProcess)
 		//average
 		break;
 	case 4:
-		
+		for (int i = 0; i < bih.Width; ++i)
+		{
+			output[i] = colorsToProcess[i];
+		}
+		for (int j = bih.Width; j < lengthOfColors; ++j)
+		{
+			output[j] = PaethPredictor(colorsToProcess[j],
+									colorsToProcess[j-bih.Width],
+									colorsToProcess[j - bih.Width - 1]);
+		}
 		//paeth
 		break;
 	}
@@ -273,7 +300,7 @@ int* getPredictor(int* colorsToProcess)
 unsigned char* compress()
 {
 	k = 0;
-	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width];
+	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width*2];
 	int* colorsTemp = rawToColors(Pixels);
 	int* colors = getPredictor(colorsTemp);
 	int lastColor = colors[0];
