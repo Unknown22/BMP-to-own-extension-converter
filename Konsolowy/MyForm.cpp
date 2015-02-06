@@ -50,7 +50,6 @@ struct MMSSInfoHeader
 	unsigned short BitsPerPxl;		// Number of bits per pixel
 	unsigned int Compression;		// Type of compression
 	unsigned int ColorsUsed;		// Number of colors used
-	unsigned short ColorIndicator;	// Color or Gray Scale Indicator
 };
 #pragma pack()
 
@@ -63,7 +62,7 @@ int t = 0; //indeks w tabeli kolorów
 int k = 0; //licznik d³ugoœci skompresowanych danych
 int lengthOfColors = 0;//licznik d³ugoœci nieskompresowanych kolorów
 int predictorName = 0;
-int colorIndicator = 0; //0 obraz kolorowy, 1 obraz w skali szarosci
+int* compressedIMG;
 
 void GetPredictor::getPr(int num)
 {
@@ -73,14 +72,13 @@ void GetPredictor::getPr(int num)
 void loadMMSSHeader()
 {
 	msih.MMSSType = (unsigned short)21325;
-	msih.OffBits = (unsigned int)30;
-	msih.HeaderSize = (unsigned int)24;
+	msih.OffBits = (unsigned int)24;
+	msih.HeaderSize = (unsigned int)18;
 	msih.Width = bih.Width;
 	msih.Height = bih.Height;
 	msih.BitsPerPxl = (unsigned short)6;
 	msih.ColorsUsed = (unsigned int)t;
-	msih.Compression = (unsigned int)predictorName; //typ kompresji czyli numer predyktora
-	msih.ColorIndicator = (unsigned short)colorIndicator;
+	//msih.Compression = x; //typ kompresji czyli numer predyktora do dodania
 
 }
 
@@ -141,48 +139,6 @@ int MakeColorTable()
 	return t;
 }
 
-void changeColorsToGreyScale()
-{
-	for (int x = 0; x < t; x++)
-	{
-		ColorTable[x].Red = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
-		ColorTable[x].Green = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
-		ColorTable[x].Blue = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
-	}
-}
-
-void GetColorIndicator::getCi(int i)
-{
-	colorIndicator = i;
-}
-
-void ReadMMSS(char* path)
-{
-	f = fopen(path, "rb");
-	if (f != NULL)
-	{
-		fread(&msih, sizeof(MMSSInfoHeader), 1, f);
-		if (msih.MMSSType != 21325)
-		{
-			fclose(f);
-			return;
-		}
-
-		unsigned int mallocSize = msih.Height * msih.Width * 3;
-		Pixels = (unsigned char *)malloc(mallocSize * sizeof(unsigned char));
-		unsigned char pad[4] = { 0 };
-		unsigned int padding = (4 - ((msih.Width * 3) % 4)) % 4;
-		fseek(f, msih.OffBits, SEEK_SET);
-		for (int i = 0; i < msih.Height; ++i)
-		{
-			fread(Pixels + i * msih.Width * 3, (size_t)1, (size_t)msih.Width * 3, f);
-			fread(&pad, 1, padding, f);
-		}
-		//cout << "Test: wczytano" << endl;
-	}
-	fclose(f);
-}
-
 void ReadBMP(char* path)
 {
 	f = fopen(path, "rb");
@@ -211,6 +167,62 @@ void ReadBMP(char* path)
 	}
 
 	fclose(f);
+}
+
+void ReadMMSS(char* path)
+{
+	f = fopen(path, "rb");
+	if (f != NULL)
+	{
+		fread(&msih, sizeof(MMSSInfoHeader), 1, f);
+		if (msih.MMSSType != 21325)
+		{
+			fclose(f);
+			return;
+		}
+
+		int filesize = GetFileSize();
+
+		int padding = filesize - msih.OffBits - (msih.ColorsUsed * 6);
+
+		fseek(f, msih.OffBits, SEEK_SET);
+		int* tempColors = new int[msih.ColorsUsed * 6];
+
+		for (int i = 0; i < msih.ColorsUsed * 6; i++)
+		{
+			fread(tempColors + i, (size_t)sizeof(Byte), 1, f);
+		}
+		int counter = 0;
+		for (int i = 0; i < msih.ColorsUsed * 6; i + 3)
+		{
+			ColorTable[counter].Red = tempColors[i];
+			ColorTable[counter].Green = tempColors[i + 1];
+			ColorTable[counter].Blue = tempColors[i + 2];
+			counter++;
+		}
+
+		fseek(f, msih.OffBits + (msih.ColorsUsed * 6), SEEK_SET);
+		compressedIMG = new int[padding];
+		for (int i = 0; i < padding; ++i)
+		{
+			fread(compressedIMG + i, (size_t)sizeof(Byte), 1, f);
+		}
+	}
+	fclose(f);
+}
+
+unsigned char* decompress()
+{
+	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height * 3];
+	int cnt = 0;
+	for (int i = 0; i < msih.Width*msih.Height * 3; i + 2)
+	{
+		for (int j = 0; j < compressedIMG[i]; j++)
+		{
+			decompressedIMG[cnt++] = compressedIMG[i + 1];
+		}
+	}
+	return decompressedIMG;
 }
 
 int ConvertToMMSS::ReadAndPrepare(char* path)
@@ -278,14 +290,14 @@ int* getPredictor(int* colorsToProcess)
 		output[0] = colorsToProcess[0];
 		for (int i = 1; i < lengthOfColors; i++)
 		{
-			output[i] = colorsToProcess[i] - colorsToProcess[i-1] + 64; //+64 zeby na wyjsciu byly tylko dodatnie wartosci, przy dekodowaniu trzeba odjac 64
+			output[i] = colorsToProcess[i] - colorsToProcess[i-1]+64; //+64 zeby na wyjsciu byly tylko dodatnie wartosci, przy dekodowaniu trzeba odjac 64
 		}
 		//sub
 		break;
 	case 2:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64;
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{	
@@ -296,7 +308,7 @@ int* getPredictor(int* colorsToProcess)
 	case 3:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64;
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{
@@ -311,7 +323,7 @@ int* getPredictor(int* colorsToProcess)
 		}
 		for (int j = bih.Width; j < lengthOfColors; ++j)
 		{
-			output[j] = PaethPredictor(colorsToProcess[j],
+			output[j] = output[j] - PaethPredictor(colorsToProcess[j],
 									colorsToProcess[j-bih.Width],
 									colorsToProcess[j - bih.Width - 1]) + 64; //jak wyzej
 		}
@@ -320,6 +332,59 @@ int* getPredictor(int* colorsToProcess)
 	}
 
 
+	return output;
+}
+
+int* DecodePredictor(int* colorsToProcess)
+{
+	int outputSize = sizeof(colorsToProcess) / sizeof(*colorsToProcess);
+	int* output = new int[outputSize];
+	switch (predictorName)
+	{
+		//sub
+	case 1:
+		output[0] = colorsToProcess[0];
+		for (int i = 1; i < outputSize; ++i)
+		{
+			output[i] = colorsToProcess[i] + colorsToProcess[i + 1] - 64;
+		}
+		break;
+		//up
+	case 2:
+		for (int i = 0; i < bih.Width; ++i)
+		{
+			output[i] = colorsToProcess[i] - 64;
+		}
+		for (int j = bih.Width; j < outputSize; ++j)
+		{
+			output[j] = colorsToProcess[j] + colorsToProcess[j - bih.Width] - 64;
+		}
+		break;
+		//average
+	case 3:
+		for (int i = 0; i < bih.Width; ++i)
+		{
+			output[i] = colorsToProcess[i] - 64;
+		}
+		for (int j = bih.Width; j < outputSize; ++j)
+		{
+			output[j] = colorsToProcess[j] + Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width]) / 2) - 64;
+		}
+		break;
+		//paeth
+	case 4:
+		for (int i = 0; i < bih.Width; ++i)
+		{
+			output[i] = colorsToProcess[i] - 64;
+		}
+		for (int j = bih.Width; j < outputSize; ++j)
+		{
+			output[j] = output[j] + PaethPredictor(colorsToProcess[j],
+				colorsToProcess[j - bih.Width],
+				colorsToProcess[j - bih.Width - 1]) - 64;
+		}
+		break;
+	}
 	return output;
 }
 
@@ -370,11 +435,6 @@ int ConvertToMMSS::saveFile(char* path)
 	int j = 0;
 	unsigned char* ColorsToSave = new unsigned char[t * 3];
 
-	if (colorIndicator = 1)
-	{
-		void changeColorsToGreyScale();
-	}
-
 	for (int i = 0; i < t; i++)
 	{
 		ColorsToSave[j++] = ColorTable[i].Red;
@@ -394,9 +454,8 @@ int ConvertToMMSS::saveFile(char* path)
 	fwrite(&msih.Height, (size_t) sizeof(msih.Height), (size_t)1, s); // 4 bytes
 
 	fwrite(&msih.BitsPerPxl, (size_t) sizeof(msih.BitsPerPxl), (size_t)1, s); // 2 bytes
-	fwrite(&msih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); // 4 bytes
+	//fwrite(&msih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); //od odkomentowania po dodaniu numeru predyktora
 	fwrite(&msih.ColorsUsed, (size_t) sizeof(msih.ColorsUsed), (size_t)1, s); // 4 bytes
-	fwrite(&msih.ColorIndicator, (size_t) sizeof(msih.BitsPerPxl), (size_t)1, s); // 2 bytes
 	
 	
 	unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
