@@ -47,3 +47,13 @@ Konsolowy.v12.suo
 Konsolowy.sdf
 Konsolowy.v12.suo
 Konsolowy/Debug/Konsolowy.tlog/Konsolowy.write.1u.tlog
+Debug/Konsolowy.exe
+Debug/Konsolowy.pdb
+Konsolowy.sdf
+Konsolowy.v12.suo
+*.log
+*.tlog
+Konsolowy/Debug/Konsolowy.tlog/Konsolowy.lastbuildstate
+Konsolowy/Debug/Konsolowy.vcxproj.GenerateResource.Cache
+Konsolowy/Debug/MyForm.obj
+Konsolowy/Debug/vc120.pdb
