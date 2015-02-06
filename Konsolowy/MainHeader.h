@@ -31,3 +31,9 @@ class GetPredictor
 public:
 	void getPr(int num);
 };
+
+class GetColorIndicator
+{
+public:
+	void getCi(int i);
+};

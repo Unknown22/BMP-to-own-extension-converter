@@ -50,6 +50,7 @@ struct MMSSInfoHeader
 	unsigned short BitsPerPxl;		// Number of bits per pixel
 	unsigned int Compression;		// Type of compression
 	unsigned int ColorsUsed;		// Number of colors used
+	unsigned short ColorIndicator;	// Color or Gray Scale Indicator
 };
 #pragma pack()
 
@@ -63,6 +64,7 @@ int k = 0; //licznik d³ugoœci skompresowanych danych
 int lengthOfColors = 0;//licznik d³ugoœci nieskompresowanych kolorów
 int predictorName = 0;
 int* compressedIMG;
+int colorIndicator = 0; //0 obraz kolorowy, 1 obraz w skali szarosci
 
 void GetPredictor::getPr(int num)
 {
@@ -72,14 +74,14 @@ void GetPredictor::getPr(int num)
 void loadMMSSHeader()
 {
 	msih.MMSSType = (unsigned short)21325;
-	msih.OffBits = (unsigned int)24;
-	msih.HeaderSize = (unsigned int)18;
+	msih.OffBits = (unsigned int)30;
+	msih.HeaderSize = (unsigned int)24;
 	msih.Width = bih.Width;
 	msih.Height = bih.Height;
 	msih.BitsPerPxl = (unsigned short)6;
 	msih.ColorsUsed = (unsigned int)t;
-	//msih.Compression = x; //typ kompresji czyli numer predyktora do dodania
-
+	msih.Compression = (unsigned int)predictorName; //typ kompresji czyli numer predyktora
+	msih.ColorIndicator = (unsigned short)colorIndicator;
 }
 
 void loadBMPHeader()
@@ -137,6 +139,21 @@ int MakeColorTable()
 		}
 	}
 	return t;
+}
+
+void changeColorsToGreyScale()
+{
+	for (int x = 0; x < t; x++)
+	{
+		ColorTable[x].Red = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
+		ColorTable[x].Green = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
+		ColorTable[x].Blue = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
+	}
+}
+
+void GetColorIndicator::getCi(int i)
+{
+	colorIndicator = i;
 }
 
 void ReadBMP(char* path)
@@ -454,8 +471,9 @@ int ConvertToMMSS::saveFile(char* path)
 	fwrite(&msih.Height, (size_t) sizeof(msih.Height), (size_t)1, s); // 4 bytes
 
 	fwrite(&msih.BitsPerPxl, (size_t) sizeof(msih.BitsPerPxl), (size_t)1, s); // 2 bytes
-	//fwrite(&msih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); //od odkomentowania po dodaniu numeru predyktora
+	fwrite(&msih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); // 4 bytes
 	fwrite(&msih.ColorsUsed, (size_t) sizeof(msih.ColorsUsed), (size_t)1, s); // 4 bytes
+	fwrite(&msih.ColorIndicator, (size_t) sizeof(msih.BitsPerPxl), (size_t)1, s); // 2 bytes
 	
 	
 	unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
@@ -567,7 +585,7 @@ int ConvertToBMP::saveFile(char* path) //trzeba zedytowaæ, ¿eby dekodowa³o ByteR
 	fwrite(&bih.Height, (size_t) sizeof(bih.Height), (size_t)1, s); // 4 bytes
 	fwrite(&bih.Planes, (size_t) sizeof(bih.Planes), (size_t)1, s);
 	fwrite(&bih.BitsPerPxl, (size_t) sizeof(bih.BitsPerPxl), (size_t)1, s); // 2 bytes
-	fwrite(&bih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); //od odkomentowania po dodaniu numeru predyktora
+	fwrite(&bih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); 
 	fwrite(&bih.ImageSize, (size_t) sizeof(bih.ImageSize), (size_t)1, s);
 	fwrite(&bih.XPixels, (size_t) sizeof(bih.XPixels), (size_t)1, s);
 	fwrite(&bih.YPixels, (size_t) sizeof(bih.YPixels), (size_t)1, s);
