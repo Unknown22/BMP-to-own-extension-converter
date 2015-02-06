@@ -483,6 +483,7 @@ infoAboutImage info::GetInfo(char* path)
 	x.colors = t;
 	return x;
 }
+
 [STAThread]
 void main(array<String^>^ argv) {
 	Application::EnableVisualStyles();
