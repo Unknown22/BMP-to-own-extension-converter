@@ -101,6 +101,12 @@ void loadBMPHeader()
 	bih.ColorsImportant = (unsigned int)0;			// Number of important colors
 }
 
+int GetFileSize()
+{
+	fseek(f, 0, SEEK_END);
+	return ftell(f);
+}
+
 int MakeColorTable()
 {
 	t = 0;
@@ -182,6 +188,8 @@ void ReadBMP(char* path)
 			fread(&pad, 1, padding, f);
 		}
 		//cout << "Test: wczytano" << endl;
+		int size = GetFileSize();
+		MessageBox::Show(size.ToString());
 	}
 
 	fclose(f);
