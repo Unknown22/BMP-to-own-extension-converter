@@ -252,7 +252,7 @@ int* getPredictor(int* colorsToProcess)
 		output[0] = colorsToProcess[0];
 		for (int i = 1; i < lengthOfColors; i++)
 		{
-			output[i] = colorsToProcess[i] - colorsToProcess[i-1];//nie jestem pewin jak obliczyæ to bpp, zostawiam 1
+			output[i] = colorsToProcess[i] - colorsToProcess[i-1]+64; //+64 zeby na wyjsciu byly tylko dodatnie wartosci, przy dekodowaniu trzeba odjac 64
 		}
 		//sub
 		break;
@@ -263,7 +263,7 @@ int* getPredictor(int* colorsToProcess)
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{	
-			output[j] = colorsToProcess[j] - colorsToProcess[j - bih.Width];
+			output[j] = colorsToProcess[j] - colorsToProcess[j - bih.Width] + 64; //jak wyzej
 		}
 		//up
 		break;
@@ -274,20 +274,20 @@ int* getPredictor(int* colorsToProcess)
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{
-			output[j] = colorsToProcess[j] - Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width])/2);//to samo co przy subie(bpp)
+			output[j] = colorsToProcess[j] - Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width]) / 2) + 64; //jak wyzej
 		}
 		//average
 		break;
 	case 4:
 		for (int i = 0; i < bih.Width; ++i)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64; //jak wyzej
 		}
 		for (int j = bih.Width; j < lengthOfColors; ++j)
 		{
 			output[j] = PaethPredictor(colorsToProcess[j],
 									colorsToProcess[j-bih.Width],
-									colorsToProcess[j - bih.Width - 1]);
+									colorsToProcess[j - bih.Width - 1]) + 64; //jak wyzej
 		}
 		//paeth
 		break;
