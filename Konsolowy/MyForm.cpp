@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <msclr/marshal_cppstd.h>
 #include <math.h>
+#include <iostream>
 
 using namespace std;
 using namespace System;
@@ -186,6 +187,7 @@ void ReadBMP(char* path)
 	fclose(f);
 }
 
+
 void ReadMMSS(char* path)
 {
 	f = fopen(path, "rb");
@@ -216,7 +218,8 @@ void ReadMMSS(char* path)
 		{
 			ColorTable[counter].Red = (int)tempColors[i];
 			ColorTable[counter].Green = (int)tempColors[i + 1];
-			ColorTable[counter].Blue = (int)tempColors[i + 2];
+			ColorTable[counter].Blue = (int)tempColors[i+2];
+			cout << ColorTable[counter].Red << ":" << ColorTable[counter].Green << ":" << ColorTable[counter].Blue << endl;
 			counter++;
 		}
 
@@ -225,7 +228,7 @@ void ReadMMSS(char* path)
 		Pixels2 = (unsigned char *)malloc(mallocSize2 * sizeof(unsigned char));
 		unsigned char pad[4] = { 0 };
 		unsigned int padding = (4 - ((msih.Width * 3) % 4)) % 4;
-		fseek(f, bih.OffBits + (msih.ColorsUsed * 3), SEEK_SET);
+		fseek(f, msih.OffBits + msih.ColorsUsed * 3, SEEK_SET);
 		for (int i = 0; i < msih.Height* msih.Width * 3; ++i)
 		{
 			fread(Pixels2 + i , (size_t)sizeof(Byte), (size_t)1, f);
@@ -249,10 +252,13 @@ unsigned char* decompress()
 
 	MessageBox::Show(Pixels2Length.ToString());
 
+	cout << (int)Pixels2[0] << ", " << (int)Pixels2[1] << endl;
 	for (int w = 0; w < Pixels2Length; w++)
 	{
-		Pixels2[w] -= 128;
+		Pixels2[w] = (int)Pixels2[w] - 128;
 	}
+	cout << (int)Pixels2[0] << ", " << (int)Pixels2[1] << endl;
+
 
 	int i = 0;
 
@@ -279,12 +285,13 @@ unsigned char* decompress()
 		{
 			for (int j = 0; j<((int)Pixels2[i] + 1); j++)
 			{
-				memcpy(&decompressedIMG[q++], &Pixels2[i+j], (size_t)sizeof(Byte));
+				memcpy(&decompressedIMG[q++], &Pixels2[i+j+1], (size_t)sizeof(Byte));
 				//decompressedIMG[q++] = (int)Pixels2[i + j];
 			}
 			i += (int)Pixels2[i] + 1;
 		}
 	}
+	cout << (int)decompressedIMG[0] << ":" << (int)decompressedIMG[1] << ":" << (int)decompressedIMG[2] << ":" << (int)decompressedIMG[3] << ":" << (int)decompressedIMG[4] << ":" << (int)decompressedIMG[5];
 	return decompressedIMG;
 }
 
@@ -399,7 +406,7 @@ unsigned char* getPredictor(unsigned char* colorsToProcess)
 unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 {
 	//int outputSize = sizeof(colorsToProcess) / sizeof(*colorsToProcess);
-	unsigned int outputSize = msih.Width*msih.Height * 3;
+	signed int outputSize = msih.Width*msih.Height * 3;
 	//MessageBox::Show(outputSize.ToString()); //4
 	unsigned char* output = new unsigned char[outputSize];
 	switch (msih.Compression)
@@ -512,6 +519,7 @@ unsigned char* compress()
 			i += j;
 		}
 	}
+	cout << (int)ToSave[0] << ":" << (int)ToSave[1];
 	return ToSave;
 }
 
