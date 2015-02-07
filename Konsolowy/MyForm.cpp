@@ -158,6 +158,19 @@ void GetColorIndicator::getCi(int i)
 	colorIndicator = i;
 }
 
+void ToGray()
+{
+	unsigned int cPixels = bih.Height * bih.Width * 3;
+	for (unsigned char *p = Pixels; p < Pixels + cPixels; p += 3)
+	{
+		unsigned char g = (unsigned char)((*(p + 0)) * 0.3 + (*(p + 1)) * 0.59 + (*(p + 2)) * 0.11);
+		*(p + 0) = g;
+		*(p + 1) = g;
+		*(p + 2) = g;
+	}
+}
+
+
 void ReadBMP(char* path)
 {
 	f = fopen(path, "rb");
@@ -185,7 +198,8 @@ void ReadBMP(char* path)
 	}
 	if (colorIndicator == 1)
 	{
-		changeColorsToGreyScale();
+		ToGray();
+		//changeColorsToGreyScale();
 	}
 
 	fclose(f);
@@ -254,7 +268,6 @@ unsigned char* decompress()
 	int q = 0;
 	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height * 3];
 	signed char* Pixels3 = new signed char[Pixels2Length];
-	MessageBox::Show(Pixels2Length.ToString());
 
 	cout << (int)Pixels2[0] << ", " << (int)Pixels2[1] << endl;
 	for (int w = 0; w < Pixels2Length; w++)
@@ -411,7 +424,7 @@ unsigned char* getPredictor(unsigned char* colorsToProcess)
 		}
 		for (int j = bih.Width; j < lengthOfColors; ++j)
 		{
-			output[j] = output[j] - PaethPredictor(colorsToProcess[j],
+			output[j] = colorsToProcess[j] - PaethPredictor(colorsToProcess[j],
 				colorsToProcess[j - bih.Width],
 				colorsToProcess[j - bih.Width - 1]);
 		}
@@ -424,7 +437,7 @@ unsigned char* getPredictor(unsigned char* colorsToProcess)
 unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 {
 	//int outputSize = sizeof(colorsToProcess) / sizeof(*colorsToProcess);
-	signed int outputSize = msih.Width*msih.Height * 3;
+	signed int outputSize = msih.Width*msih.Height;
 	//MessageBox::Show(outputSize.ToString()); //4
 	unsigned char* output = new unsigned char[outputSize];
 	switch (msih.Compression)
@@ -446,11 +459,11 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 	case 2:
 		for (int i = 0; i < msih.Width; ++i)
 		{
-			output[i] = colorsToProcess[i];
+			output = colorsToProcess;
 		}
 		for (int j = msih.Width; j < outputSize; ++j)
 		{
-			output[j] = colorsToProcess[j] + colorsToProcess[j - msih.Width];
+			output[j] = colorsToProcess[j] + output[j - msih.Width];
 		}
 		break;
 		//average
@@ -461,7 +474,7 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 		}
 		for (int j = msih.Width; j < outputSize; ++j)
 		{
-			output[j] = colorsToProcess[j] + Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - msih.Width]) / 2);
+			output[j] = colorsToProcess[j] + Math::Floor((output[j - 1] + colorsToProcess[j - msih.Width]) / 2);
 		}
 		break;
 		//paeth
@@ -472,9 +485,9 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 		}
 		for (int j = msih.Width; j < outputSize; ++j)
 		{
-			output[j] = output[j] + PaethPredictor(colorsToProcess[j],
-				colorsToProcess[j - bih.Width],
-				colorsToProcess[j - bih.Width - 1]);
+			output[j] = colorsToProcess[j] + PaethPredictor(output[j],
+				output[j - bih.Width],
+				output[j - bih.Width - 1]);
 		}
 		break;
 	}
@@ -617,20 +630,9 @@ int ConvertToBMP::saveFile(char* path)
 		result[x + 2] = ColorTable[decodedPredictors[y]].Red;
 		result[x + 1] = ColorTable[decodedPredictors[y]].Green;
 		result[x] = ColorTable[decodedPredictors[y]].Blue;
-		/*
-		result[x + 2] = ColorTable[IMG[y]].Red;
-		result[x + 1] = ColorTable[IMG[y]].Green;
-		result[x] = ColorTable[IMG[y]].Blue;*/
 		y++;
 	}
-	/*for (int x = 0; x < msih.Width*msih.Height; ++x)
-	cout << (int)ColorTable[IMG[x]].Red << " ";*/
-	//for (int x = 0; x < 64; ++x)
-		//cout << (int)ColorTable[x].Red << " " << (int)ColorTable[x].Green << " " << (int)ColorTable[x].Blue << endl;
-	/*FILE *pt;
-	fopen_s(&pt, "test.txt", "wb");
-	fwrite(&result, (size_t)(msih.Width*msih.Height * 3), (size_t)1, pt);
-	fclose(pt);*/
+
 	FILE* s;
 	if (fopen_s(&s, path, "wb") != 0) return 0;
 	fwrite(&bih.BMPType, (size_t) sizeof(bih.BMPType), (size_t)1, s); // 2 bytes
@@ -655,42 +657,11 @@ int ConvertToBMP::saveFile(char* path)
 
 	fseek(s, bih.OffBits, SEEK_SET);
 
-	/*for (int k = 0; k < msih.Height * msih.Width * 3; k = k + 3)
-	{
-	unsigned char test[] = { ColorTable[IMG[k]].Blue, ColorTable[IMG[k+1]].Green, ColorTable[IMG[k+2]].Red };
-	fwrite(test, (size_t)sizeof(test), (size_t)1, s);
-	if (k % msih.Width == 0) fwrite("\0", 1, padding, s);
-	}*/
-
-	//for (int k = 0; k < msih.Height; k++)
-	//{
-	//	fwrite(result + k * msih.Width * 3, (size_t)msih.Width * 3, (size_t)1, s);
-	//	fwrite("\0", 1, padding, s);
-
-	//	/*fwrite(&ColorTable[decodedPredictors[k]].Red, (size_t)sizeof(Byte), (size_t)1, s);
-	//	fwrite(&ColorTable[decodedPredictors[k]].Green, (size_t)sizeof(Byte), (size_t)1, s);
-	//	fwrite(&ColorTable[decodedPredictors[k]].Blue, (size_t)sizeof(Byte), (size_t)1, s);*/
-	//	/*if (k % msih.Width == 0)
-	//		fwrite("\0", 1, padding, s);*/
-	//}
 	for (int i = 0; i < msih.Height; i++)
 	{
 		fwrite(result + i * msih.Width * 3, (size_t)msih.Width * 3, (size_t)1, s);
 		fwrite("\0", 1, padding, s);
 	}
-
-	/*
-	for (int cc = 0; cc < j; cc++)
-	{
-	fwrite(ColorsToSave + cc, (size_t)sizeof(Byte), (size_t)1, s);
-	}
-	fseek(s, msih.OffBits + j, SEEK_SET);
-	for (int q = 0; q < k; q++)
-	{
-	fwrite(ToSave + q, (size_t)sizeof(Byte), (size_t)1, s);
-	}*/
-
-	//fwrite("\0", 1, padding, s); NIE WIEM CO Z TYM ZROBIC, ZOSTAWIAM
 	fclose(s);
 	return 0;
 }
