@@ -60,10 +60,11 @@ BMPInfoHeader bih;
 MMSSInfoHeader msih;
 RGBPixel ColorTable[64];
 int t = 0; //indeks w tabeli kolorów
-int k = 0; //licznik d³ugoœci skompresowanych danych
+int ka = 0; //licznik d³ugoœci skompresowanych danych
 int lengthOfColors = 0;//licznik d³ugoœci nieskompresowanych kolorów
 int predictorName = 0;
 unsigned char* Pixels2;
+unsigned int Pixels2Length;
 int colorIndicator = 0; //0 obraz kolorowy, 1 obraz w skali szarosci
 
 void GetPredictor::getPr(int num)
@@ -180,7 +181,6 @@ void ReadBMP(char* path)
 		}
 		//cout << "Test: wczytano" << endl;
 		int size = GetFileSize();
-		MessageBox::Show(size.ToString());
 	}
 
 	fclose(f);
@@ -221,14 +221,15 @@ void ReadMMSS(char* path)
 		}
 
 		unsigned int mallocSize2 = msih.Height * msih.Width * 3;
+		Pixels2Length = msih.Height * msih.Width * 3;
 		Pixels2 = (unsigned char *)malloc(mallocSize2 * sizeof(unsigned char));
 		unsigned char pad[4] = { 0 };
 		unsigned int padding = (4 - ((msih.Width * 3) % 4)) % 4;
 		fseek(f, bih.OffBits + (msih.ColorsUsed * 3), SEEK_SET);
 		for (int i = 0; i < msih.Height; ++i)
 		{
-			fread(Pixels2 + i * msih.Width * 3, (size_t)1, (size_t)msih.Width * 3, f);
-			fread(&pad, 1, padding, f);
+			fread(Pixels2 + i * msih.Width * 3, (size_t)msih.Width * 3, (size_t)1, f);
+			//fread(&pad, 1, padding, f);
 		}
 		/*
 		fseek(f, msih.OffBits + (msih.ColorsUsed * 3), SEEK_SET);
@@ -237,6 +238,7 @@ void ReadMMSS(char* path)
 		{
 		fread(compressedIMG + i, (size_t)sizeof(Byte), 1, f);
 		}*/
+
 	}
 	fclose(f);
 }
@@ -244,13 +246,12 @@ void ReadMMSS(char* path)
 unsigned char* decompress()
 {
 	int q = 0;
-	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height];
-	
+	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height * 3];
 
+	int length = Pixels2Length;
+	MessageBox::Show(length.ToString());
 
-	int length = sizeof(Pixels2) / sizeof(*Pixels2);
-
-	for (int w = 0; w < length; w += 2)
+	for (int w = 0; w < length; w++)
 	{
 		Pixels2[w] -= 128;
 	}
@@ -258,30 +259,30 @@ unsigned char* decompress()
 	int i = 0;
 
 	//dopoki wszystkie bajty nie sa zdekompresowane
-	while (i < length)
+	while (i < length) // && q < msih.Width*msih.Height
 	{
 		//kod pusty
-		if (Pixels2[i] == -128)
+		if ((int)Pixels2[i] == -128)
 		{
 			i++;
 		}
 		//sekwencja powtarzajacych sie bajtow
-		else if (Pixels2[i] < 0)
+		else if ((int)Pixels2[i] < 0)
 		{
-			for (int j = 0; j<-(Pixels2[i] - 1); j++)
+			for (int j = 0; j<-((int)Pixels2[i] - 1); j++)
 			{
-				Pixels2[q++] = (int)Pixels2[i + 1];
+				decompressedIMG[q++] = (int)Pixels2[i + 1];
 			}
 			i += 2;
 		}
 		//sekwencja roznych bajtow
 		else
 		{
-			for (int j = 0; j<(Pixels2[i] + 1); j++)
+			for (int j = 0; j<((int)Pixels2[i] + 1); j++)
 			{
-				Pixels2[q++] = (int)Pixels2[i + 1 + j];
+				decompressedIMG[q++] = (int)Pixels2[i + 1 + j];
 			}
-			i += Pixels2[i] + 2;
+			i += (int)Pixels2[i] + 2;
 		}
 	}
 	return decompressedIMG;
@@ -397,12 +398,16 @@ int* getPredictor(int* colorsToProcess)
 
 unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 {
-	int outputSize = sizeof(colorsToProcess) / sizeof(*colorsToProcess);
+	//int outputSize = sizeof(colorsToProcess) / sizeof(*colorsToProcess);
+	unsigned int outputSize = msih.Width*msih.Height * 3;
+	//MessageBox::Show(outputSize.ToString()); //4
 	unsigned char* output = new unsigned char[outputSize];
 	switch (msih.Compression)
 	{
 	case 0:
-		output = colorsToProcess;
+		for (int i = 0; i < outputSize; i++){
+			output[i] = colorsToProcess[i];
+		}
 		break;
 		//sub
 	case 1:
@@ -453,8 +458,7 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 
 unsigned char* compress()
 {
-	k = 0;
-	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width*2];
+	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width * 2];
 	int* colorsTemp = rawToColors(Pixels);
 	int* colors = getPredictor(colorsTemp);
 	int i = 0;
@@ -475,8 +479,8 @@ unsigned char* compress()
 				j++;
 			}
 			//wypisz spakowana sekwencje
-			ToSave[k++] = -j + 128;
-			ToSave[k++] = (int)colors[i + j];
+			ToSave[ka++] = -j + 128;
+			ToSave[ka++] = (int)colors[i + j];
 
 			//przesun wskaznik o dlugosc sekwencji
 			i += (j + 1);
@@ -499,22 +503,22 @@ unsigned char* compress()
 				j++;
 			}
 			//wypisz spakowana sekwencje
-			ToSave[k++] = (j-1) + 128;
+			ToSave[ka++] = (j - 1) + 128;
 			for (int k = 0; k<j; k++)
 			{
-				ToSave[k++] = (int)colors[i + k];
+				ToSave[ka++] = (int)colors[i + k] + 128;
 			}
 			//przesun wskaznik o dlugosc sekwencji
 			i += j;
 		}
-	}				
+	}
 	return ToSave;
 }
 
 int ConvertToMMSS::saveFile(char* path)
 {
 	unsigned char* ToSave = new unsigned char[bih.Height*bih.Width];
-	
+
 	int j = 0;
 	unsigned char* ColorsToSave = new unsigned char[t * 3];
 
@@ -526,7 +530,7 @@ int ConvertToMMSS::saveFile(char* path)
 	}
 
 	ToSave = compress();
-	
+
 	FILE* s;
 	if (fopen_s(&s, path, "wb") != 0) return 0;
 	fwrite(&msih.MMSSType, (size_t) sizeof(msih.MMSSType), (size_t)1, s); // 2 bytes
@@ -540,8 +544,8 @@ int ConvertToMMSS::saveFile(char* path)
 	fwrite(&msih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); // 4 bytes
 	fwrite(&msih.ColorsUsed, (size_t) sizeof(msih.ColorsUsed), (size_t)1, s); // 4 bytes
 	fwrite(&msih.ColorIndicator, (size_t) sizeof(msih.BitsPerPxl), (size_t)1, s); // 2 bytes
-	
-	
+
+
 	unsigned int padding = (4 - ((bih.Width * 3) % 4)) % 4;
 	fseek(s, msih.OffBits, SEEK_SET);
 	for (int cc = 0; cc < j; cc++)
@@ -549,11 +553,11 @@ int ConvertToMMSS::saveFile(char* path)
 		fwrite(ColorsToSave + cc, (size_t)sizeof(Byte), (size_t)1, s);
 	}
 	fseek(s, msih.OffBits + j, SEEK_SET);
-	for (int q = 0; q < k; q++)
+	for (int q = 0; q < ka; q++)
 	{
 		fwrite(ToSave + q, (size_t)sizeof(Byte), (size_t)1, s);
 	}
-	
+
 	//fwrite("\0", 1, padding, s); NIE WIEM CO Z TYM ZROBIC, ZOSTAWIAM
 	fclose(s);
 	return 0;
@@ -577,16 +581,33 @@ int ConvertToBMP::ReadAndPrepare(char* path)
 
 int ConvertToBMP::saveFile(char* path)
 {
+	
 	int colorCount = 0;
 	int i;
-	unsigned char* ToRead = new unsigned char[msih.Height*msih.Width];
-	int k = 0;
+	//int k = 0;
 	int j = 0;
-	unsigned char* ColorsToRead = new unsigned char[msih.ColorsUsed * 3];
 	unsigned char* IMG = new unsigned char[msih.Width*msih.Height];
 	IMG = decompress();
-	unsigned char* decodedPredictors = DecodePredictor(IMG);
-
+	//unsigned char* decodedPredictors = DecodePredictor(IMG);
+	unsigned char* result = new unsigned char[msih.Width*msih.Height * 3];
+	for (int x = 0, y = 0; x < msih.Width*msih.Height * 3; x = x + 3)
+	{
+		/*result[x + 2] = ColorTable[decodedPredictors[y]].Red;
+		result[x + 1] = ColorTable[decodedPredictors[y]].Green;
+		result[x] = ColorTable[decodedPredictors[y]].Blue;*/
+		result[x + 2] = ColorTable[IMG[y + 2]].Red;
+		result[x + 1] = ColorTable[IMG[y + 1]].Green;
+		result[x] = ColorTable[IMG[y]].Blue;
+		y++;
+	}
+	/*for (int x = 0; x < msih.Width*msih.Height; ++x)
+	cout << (int)ColorTable[IMG[x]].Red << " ";*/
+	//for (int x = 0; x < 64; ++x)
+		//cout << (int)ColorTable[x].Red << " " << (int)ColorTable[x].Green << " " << (int)ColorTable[x].Blue << endl;
+	/*FILE *pt;
+	fopen_s(&pt, "test.txt", "wb");
+	fwrite(&result, (size_t)(msih.Width*msih.Height * 3), (size_t)1, pt);
+	fclose(pt);*/
 	FILE* s;
 	if (fopen_s(&s, path, "wb") != 0) return 0;
 	fwrite(&bih.BMPType, (size_t) sizeof(bih.BMPType), (size_t)1, s); // 2 bytes
@@ -599,7 +620,7 @@ int ConvertToBMP::saveFile(char* path)
 	fwrite(&bih.Height, (size_t) sizeof(bih.Height), (size_t)1, s); // 4 bytes
 	fwrite(&bih.Planes, (size_t) sizeof(bih.Planes), (size_t)1, s);
 	fwrite(&bih.BitsPerPxl, (size_t) sizeof(bih.BitsPerPxl), (size_t)1, s); // 2 bytes
-	fwrite(&bih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); 
+	fwrite(&bih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s);
 	fwrite(&bih.ImageSize, (size_t) sizeof(bih.ImageSize), (size_t)1, s);
 	fwrite(&bih.XPixels, (size_t) sizeof(bih.XPixels), (size_t)1, s);
 	fwrite(&bih.YPixels, (size_t) sizeof(bih.YPixels), (size_t)1, s);
@@ -611,29 +632,39 @@ int ConvertToBMP::saveFile(char* path)
 
 	fseek(s, bih.OffBits, SEEK_SET);
 
-	for (k = 0; k < msih.Height*msih.Width; k++)
+	/*for (int k = 0; k < msih.Height * msih.Width * 3; k = k + 3)
 	{
-		unsigned char* test = new unsigned char[3];
-		test[0] = ColorTable[decodedPredictors[k]].Red;
-		test[1] = ColorTable[decodedPredictors[k]].Green;
-		test[2] = ColorTable[decodedPredictors[k]].Blue;
-		fwrite(&test, (size_t)sizeof(test), (size_t)1, s);
-		/*fwrite(&ColorTable[decodedPredictors[k]].Red, (size_t)sizeof(Byte), (size_t)1, s);
-		fwrite(&ColorTable[decodedPredictors[k]].Green, (size_t)sizeof(Byte), (size_t)1, s);
-		fwrite(&ColorTable[decodedPredictors[k]].Blue, (size_t)sizeof(Byte), (size_t)1, s);*/
-		if (k % msih.Width == 0)
-			fwrite("\0", 1, padding, s);
+	unsigned char test[] = { ColorTable[IMG[k]].Blue, ColorTable[IMG[k+1]].Green, ColorTable[IMG[k+2]].Red };
+	fwrite(test, (size_t)sizeof(test), (size_t)1, s);
+	if (k % msih.Width == 0) fwrite("\0", 1, padding, s);
+	}*/
+
+	//for (int k = 0; k < msih.Height; k++)
+	//{
+	//	fwrite(result + k * msih.Width * 3, (size_t)msih.Width * 3, (size_t)1, s);
+	//	fwrite("\0", 1, padding, s);
+
+	//	/*fwrite(&ColorTable[decodedPredictors[k]].Red, (size_t)sizeof(Byte), (size_t)1, s);
+	//	fwrite(&ColorTable[decodedPredictors[k]].Green, (size_t)sizeof(Byte), (size_t)1, s);
+	//	fwrite(&ColorTable[decodedPredictors[k]].Blue, (size_t)sizeof(Byte), (size_t)1, s);*/
+	//	/*if (k % msih.Width == 0)
+	//		fwrite("\0", 1, padding, s);*/
+	//}
+	for (unsigned int i = 0; i < msih.Height; i++)
+	{
+		fwrite(result + i * msih.Width * 3, (size_t)msih.Width * 3, (size_t)1, s);
+		fwrite("\0", 1, padding, s);
 	}
-	
-		/*
+
+	/*
 	for (int cc = 0; cc < j; cc++)
 	{
-		fwrite(ColorsToSave + cc, (size_t)sizeof(Byte), (size_t)1, s);
+	fwrite(ColorsToSave + cc, (size_t)sizeof(Byte), (size_t)1, s);
 	}
 	fseek(s, msih.OffBits + j, SEEK_SET);
 	for (int q = 0; q < k; q++)
 	{
-		fwrite(ToSave + q, (size_t)sizeof(Byte), (size_t)1, s);
+	fwrite(ToSave + q, (size_t)sizeof(Byte), (size_t)1, s);
 	}*/
 
 	//fwrite("\0", 1, padding, s); NIE WIEM CO Z TYM ZROBIC, ZOSTAWIAM
