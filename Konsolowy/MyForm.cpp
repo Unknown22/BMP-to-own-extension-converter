@@ -183,6 +183,10 @@ void ReadBMP(char* path)
 		//cout << "Test: wczytano" << endl;
 		int size = GetFileSize();
 	}
+	if (colorIndicator == 1)
+	{
+		changeColorsToGreyScale();
+	}
 
 	fclose(f);
 }
@@ -255,8 +259,13 @@ unsigned char* decompress()
 	cout << (int)Pixels2[0] << ", " << (int)Pixels2[1] << endl;
 	for (int w = 0; w < Pixels2Length; w++)
 	{
-		Pixels3[w] = (signed char)Pixels2[w] - 128;
+		Pixels3[w] = (signed char)Pixels2[w];
 	}
+	for (int w = 0; w < Pixels2Length; w++)
+	{
+		Pixels3[w] = Pixels3[w] - 128;
+	}
+
 	cout << (int)Pixels3[0] << ", " << (int)Pixels3[1] << endl;
 	cout << (int)Pixels3[2] << ", " << (int)Pixels3[3] << endl;
 	cout << (int)Pixels3[4] << ", " << (int)Pixels3[5] << endl;
@@ -272,7 +281,7 @@ unsigned char* decompress()
 	int i = 0;
 
 	//dopoki wszystkie bajty nie sa zdekompresowane
-	while (i < Pixels2Length && q < msih.Width*msih.Height) // && 
+	while (i < Pixels2Length) // && 
 	{
 		//kod pusty
 		if ((int)Pixels3[i] == -128)
@@ -297,7 +306,7 @@ unsigned char* decompress()
 				memcpy(&decompressedIMG[q++], &Pixels3[i+j+1], (size_t)sizeof(Byte));
 				//decompressedIMG[q++] = (int)Pixels2[i + j];
 			}
-			i += (int)Pixels3[i] + 1;
+			i += (int)Pixels3[i] + 2;
 		}
 	}
 	//cout << (int)decompressedIMG[0] << ":" << (int)decompressedIMG[1] << ":" << (int)decompressedIMG[2] << ":" << (int)decompressedIMG[3] << ":" << (int)decompressedIMG[4] << ":" << (int)decompressedIMG[5];
@@ -427,8 +436,8 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 		break;
 		//sub
 	case 1:
-		output[0] = colorsToProcess[0];
-		for (int i = 1; i < outputSize; ++i)
+		//output[0] = colorsToProcess[0];
+		for (int i = 0; i < outputSize-1; ++i)
 		{
 			output[i] = colorsToProcess[i] + colorsToProcess[i + 1];
 		}
