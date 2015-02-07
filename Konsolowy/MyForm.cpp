@@ -249,15 +249,24 @@ unsigned char* decompress()
 {
 	int q = 0;
 	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height * 3];
-
+	signed char* Pixels3 = new signed char[Pixels2Length];
 	MessageBox::Show(Pixels2Length.ToString());
 
 	cout << (int)Pixels2[0] << ", " << (int)Pixels2[1] << endl;
 	for (int w = 0; w < Pixels2Length; w++)
 	{
-		Pixels2[w] = (int)Pixels2[w] - 128;
+		Pixels3[w] = (signed char)Pixels2[w] - 128;
 	}
-	cout << (int)Pixels2[0] << ", " << (int)Pixels2[1] << endl;
+	cout << (int)Pixels3[0] << ", " << (int)Pixels3[1] << endl;
+	cout << (int)Pixels3[2] << ", " << (int)Pixels3[3] << endl;
+	cout << (int)Pixels3[4] << ", " << (int)Pixels3[5] << endl;
+	cout << (int)Pixels3[6] << ", " << (int)Pixels3[7] << endl;
+	cout << (int)Pixels3[8] << ", " << (int)Pixels3[9] << endl;
+	cout << (int)Pixels3[10] << ", " << (int)Pixels3[11] << endl;
+	cout << (int)Pixels3[12] << ", " << (int)Pixels3[13] << endl;
+	cout << (int)Pixels3[14] << ", " << (int)Pixels3[15] << endl;
+	cout << (int)Pixels3[16] << ", " << (int)Pixels3[17] << endl;
+	cout << (int)Pixels3[18] << ", " << (int)Pixels3[19] << endl;
 
 
 	int i = 0;
@@ -266,32 +275,32 @@ unsigned char* decompress()
 	while (i < Pixels2Length && q < msih.Width*msih.Height) // && 
 	{
 		//kod pusty
-		if ((int)Pixels2[i] == -128)
+		if ((int)Pixels3[i] == -128)
 		{
 			i++;
 		}
 		//sekwencja powtarzajacych sie bajtow
-		else if ((int)Pixels2[i] < 0)
+		else if ((int)Pixels3[i] < 0)
 		{
-			for (int j = 0; j<-((int)Pixels2[i] - 1); j++)
+			for (int j = 0; j<-((int)Pixels3[i] - 1); j++)
 			{
 				//decompressedIMG[q++] = (int)Pixels2[i + 1];
-				memcpy(&decompressedIMG[q++], &Pixels2[i + 1], (size_t)sizeof(Byte));
+				memcpy(&decompressedIMG[q++], &Pixels3[i + 1], (size_t)sizeof(Byte));
 			}
 			i += 2;
 		}
 		//sekwencja roznych bajtow
 		else
 		{
-			for (int j = 0; j<((int)Pixels2[i] + 1); j++)
+			for (int j = 0; j<((int)Pixels3[i] + 1); j++)
 			{
-				memcpy(&decompressedIMG[q++], &Pixels2[i+j+1], (size_t)sizeof(Byte));
+				memcpy(&decompressedIMG[q++], &Pixels3[i+j+1], (size_t)sizeof(Byte));
 				//decompressedIMG[q++] = (int)Pixels2[i + j];
 			}
-			i += (int)Pixels2[i] + 1;
+			i += (int)Pixels3[i] + 1;
 		}
 	}
-	cout << (int)decompressedIMG[0] << ":" << (int)decompressedIMG[1] << ":" << (int)decompressedIMG[2] << ":" << (int)decompressedIMG[3] << ":" << (int)decompressedIMG[4] << ":" << (int)decompressedIMG[5];
+	//cout << (int)decompressedIMG[0] << ":" << (int)decompressedIMG[1] << ":" << (int)decompressedIMG[2] << ":" << (int)decompressedIMG[3] << ":" << (int)decompressedIMG[4] << ":" << (int)decompressedIMG[5];
 	return decompressedIMG;
 }
 
