@@ -143,16 +143,6 @@ int MakeColorTable()
 	return t;
 }
 
-void changeColorsToGreyScale()
-{
-	for (int x = 0; x < t; x++)
-	{
-		ColorTable[x].Red = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
-		ColorTable[x].Green = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
-		ColorTable[x].Blue = (unsigned char)(0.299*ColorTable[x].Red + 0.587*ColorTable[x].Green + 0.114*ColorTable[x].Blue + 0.5);
-	}
-}
-
 void GetColorIndicator::getCi(int i)
 {
 	colorIndicator = i;
@@ -163,16 +153,16 @@ void ToGray()
 	unsigned int cPixels = bih.Height * bih.Width * 3;
 	for (unsigned char *p = Pixels; p < Pixels + cPixels; p += 3)
 	{
-		unsigned char g = (unsigned char)((*(p + 0)) * 0.3 + (*(p + 1)) * 0.59 + (*(p + 2)) * 0.11);
+		unsigned char g = (unsigned char)((*(p + 0)) * 0.299 + (*(p + 1)) * 0.587 + (*(p + 2)) * 0.114);
 		*(p + 0) = g;
 		*(p + 1) = g;
 		*(p + 2) = g;
 	}
 }
 
-
 void ReadBMP(char* path)
 {
+	t = 0;
 	f = fopen(path, "rb");
 	if (f != NULL)
 	{
@@ -193,18 +183,16 @@ void ReadBMP(char* path)
 			fread(Pixels + i * bih.Width * 3, (size_t)1, (size_t)bih.Width * 3, f);
 			fread(&pad, 1, padding, f);
 		}
-		//cout << "Test: wczytano" << endl;
+		
 		int size = GetFileSize();
 	}
 	if (colorIndicator == 1)
 	{
 		ToGray();
-		//changeColorsToGreyScale();
 	}
 
 	fclose(f);
 }
-
 
 void ReadMMSS(char* path)
 {
@@ -237,7 +225,6 @@ void ReadMMSS(char* path)
 			ColorTable[counter].Red = (int)tempColors[i];
 			ColorTable[counter].Green = (int)tempColors[i + 1];
 			ColorTable[counter].Blue = (int)tempColors[i+2];
-			cout << ColorTable[counter].Red << ":" << ColorTable[counter].Green << ":" << ColorTable[counter].Blue << endl;
 			counter++;
 		}
 
@@ -269,7 +256,6 @@ unsigned char* decompress()
 	unsigned char* decompressedIMG = new unsigned char[msih.Width*msih.Height * 3];
 	signed char* Pixels3 = new signed char[Pixels2Length];
 
-	cout << (int)Pixels2[0] << ", " << (int)Pixels2[1] << endl;
 	for (int w = 0; w < Pixels2Length; w++)
 	{
 		Pixels3[w] = (signed char)Pixels2[w];
@@ -278,18 +264,6 @@ unsigned char* decompress()
 	{
 		Pixels3[w] = Pixels3[w] - 128;
 	}
-
-	cout << (int)Pixels3[0] << ", " << (int)Pixels3[1] << endl;
-	cout << (int)Pixels3[2] << ", " << (int)Pixels3[3] << endl;
-	cout << (int)Pixels3[4] << ", " << (int)Pixels3[5] << endl;
-	cout << (int)Pixels3[6] << ", " << (int)Pixels3[7] << endl;
-	cout << (int)Pixels3[8] << ", " << (int)Pixels3[9] << endl;
-	cout << (int)Pixels3[10] << ", " << (int)Pixels3[11] << endl;
-	cout << (int)Pixels3[12] << ", " << (int)Pixels3[13] << endl;
-	cout << (int)Pixels3[14] << ", " << (int)Pixels3[15] << endl;
-	cout << (int)Pixels3[16] << ", " << (int)Pixels3[17] << endl;
-	cout << (int)Pixels3[18] << ", " << (int)Pixels3[19] << endl;
-
 
 	int i = 0;
 
@@ -322,7 +296,6 @@ unsigned char* decompress()
 			i += (int)Pixels3[i] + 2;
 		}
 	}
-	//cout << (int)decompressedIMG[0] << ":" << (int)decompressedIMG[1] << ":" << (int)decompressedIMG[2] << ":" << (int)decompressedIMG[3] << ":" << (int)decompressedIMG[4] << ":" << (int)decompressedIMG[5];
 	return decompressedIMG;
 }
 
@@ -388,45 +361,43 @@ unsigned char* getPredictor(unsigned char* colorsToProcess)
 		output = colorsToProcess;
 		break;
 	case 1:
-		output[0] = colorsToProcess[0];
+		output[0] = colorsToProcess[0] + 64;
 		for (int i = 1; i < lengthOfColors; i++)
 		{
-			output[i] = colorsToProcess[i] - colorsToProcess[i - 1];
+			output[i] = colorsToProcess[i] - output[0] + 64;
 		}
 		//sub
 		break;
 	case 2:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64;
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{
-			output[j] = colorsToProcess[j] - colorsToProcess[j - bih.Width];
+			output[j] = (colorsToProcess[j] - colorsToProcess[j - bih.Width]) + 64;
 		}
 		//up
 		break;
 	case 3:
 		for (int i = 0; i < bih.Width; i++)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64;
 		}
 		for (int j = bih.Width; j < lengthOfColors; j++)
 		{
-			output[j] = colorsToProcess[j] - Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width]) / 2);
+			output[j] = (colorsToProcess[j] - (int)Math::Floor((colorsToProcess[j - 1] + colorsToProcess[j - bih.Width]) / 2)) + 64;
 		}
 		//average
 		break;
 	case 4:
 		for (int i = 0; i < bih.Width; ++i)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] + 64;
 		}
 		for (int j = bih.Width; j < lengthOfColors; ++j)
 		{
-			output[j] = colorsToProcess[j] - PaethPredictor(colorsToProcess[j],
-				colorsToProcess[j - bih.Width],
-				colorsToProcess[j - bih.Width - 1]);
+			output[j] = colorsToProcess[j] - PaethPredictor(colorsToProcess[j-1], colorsToProcess[j - bih.Width],colorsToProcess[j - bih.Width - 1]) + 64;
 		}
 		//paeth
 		break;
@@ -437,7 +408,7 @@ unsigned char* getPredictor(unsigned char* colorsToProcess)
 unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 {
 	//int outputSize = sizeof(colorsToProcess) / sizeof(*colorsToProcess);
-	signed int outputSize = msih.Width*msih.Height;
+	unsigned int outputSize = msih.Width*msih.Height;
 	//MessageBox::Show(outputSize.ToString()); //4
 	unsigned char* output = new unsigned char[outputSize];
 	switch (msih.Compression)
@@ -449,45 +420,43 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 		break;
 		//sub
 	case 1:
-		//output[0] = colorsToProcess[0];
+		output[0] = colorsToProcess[0] - 64;
 		for (int i = 0; i < outputSize-1; ++i)
 		{
-			output[i] = colorsToProcess[i] + colorsToProcess[i + 1];
+			output[i] = colorsToProcess[i] - 64 + output[i - 1];
 		}
 		break;
 		//up
 	case 2:
 		for (int i = 0; i < msih.Width; ++i)
 		{
-			output = colorsToProcess;
+			output[i] = colorsToProcess[i] - 64;
 		}
 		for (int j = msih.Width; j < outputSize; ++j)
 		{
-			output[j] = colorsToProcess[j] + output[j - msih.Width];
+			output[j] = (colorsToProcess[j] - 64) + output[j - msih.Width];
 		}
 		break;
 		//average
 	case 3:
 		for (int i = 0; i < msih.Width; ++i)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] - 64;
 		}
 		for (int j = msih.Width; j < outputSize; ++j)
 		{
-			output[j] = colorsToProcess[j] + Math::Floor((output[j - 1] + colorsToProcess[j - msih.Width]) / 2);
+			output[j] = (colorsToProcess[j] - 64) + (int)Math::Floor((output[j - 1] + (output[j - msih.Width])) / 2);
 		}
 		break;
 		//paeth
 	case 4:
 		for (int i = 0; i < msih.Width; ++i)
 		{
-			output[i] = colorsToProcess[i];
+			output[i] = colorsToProcess[i] - 64;
 		}
 		for (int j = msih.Width; j < outputSize; ++j)
 		{
-			output[j] = colorsToProcess[j] + PaethPredictor(output[j],
-				output[j - bih.Width],
-				output[j - bih.Width - 1]);
+			output[j] = (colorsToProcess[j] - 64) + PaethPredictor(output[j-1], output[j - bih.Width], output[j - bih.Width - 1]);
 		}
 		break;
 	}
@@ -550,7 +519,6 @@ unsigned char* compress()
 			i += j;
 		}
 	}
-	cout << (int)ToSave[0] << ":" << (int)ToSave[1];
 	return ToSave;
 }
 
@@ -580,7 +548,7 @@ int ConvertToMMSS::saveFile(char* path)
 	fwrite(&msih.Height, (size_t) sizeof(msih.Height), (size_t)1, s); // 4 bytes
 
 	fwrite(&msih.BitsPerPxl, (size_t) sizeof(msih.BitsPerPxl), (size_t)1, s); // 2 bytes
-	fwrite(&msih.Compression, (size_t) sizeof(bih.Compression), (size_t)1, s); // 4 bytes
+	fwrite(&msih.Compression, (size_t) sizeof(msih.Compression), (size_t)1, s); // 4 bytes
 	fwrite(&msih.ColorsUsed, (size_t) sizeof(msih.ColorsUsed), (size_t)1, s); // 4 bytes
 	fwrite(&msih.ColorIndicator, (size_t) sizeof(msih.BitsPerPxl), (size_t)1, s); // 2 bytes
 

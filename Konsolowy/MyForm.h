@@ -70,6 +70,7 @@ namespace Konsolowy {
 	private: System::Windows::Forms::Label^  label11;
 	private: System::Windows::Forms::RadioButton^  radioButton2;
 	private: System::Windows::Forms::RadioButton^  radioButton1;
+	private: System::Windows::Forms::Label^  label13;
 
 
 
@@ -89,6 +90,7 @@ namespace Konsolowy {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(MyForm::typeid));
 			this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 			this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
 			this->radioButton2 = (gcnew System::Windows::Forms::RadioButton());
@@ -118,9 +120,11 @@ namespace Konsolowy {
 			this->saveFile1 = (gcnew System::Windows::Forms::SaveFileDialog());
 			this->openFileDialog1 = (gcnew System::Windows::Forms::OpenFileDialog());
 			this->saveFileDialog1 = (gcnew System::Windows::Forms::SaveFileDialog());
+			this->label13 = (gcnew System::Windows::Forms::Label());
 			this->tabControl1->SuspendLayout();
 			this->tabPage1->SuspendLayout();
 			this->tabPage2->SuspendLayout();
+			this->tabPage3->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// tabControl1
@@ -279,7 +283,6 @@ namespace Konsolowy {
 			this->listBox1->Size = System::Drawing::Size(120, 69);
 			this->listBox1->TabIndex = 5;
 			this->listBox1->SelectedIndexChanged += gcnew System::EventHandler(this, &MyForm::listBox1_SelectedIndexChanged);
-			this->listBox1->SelectedIndex = 0;
 			// 
 			// label3
 			// 
@@ -383,6 +386,7 @@ namespace Konsolowy {
 			// 
 			// tabPage3
 			// 
+			this->tabPage3->Controls->Add(this->label13);
 			this->tabPage3->Location = System::Drawing::Point(4, 22);
 			this->tabPage3->Name = L"tabPage3";
 			this->tabPage3->Size = System::Drawing::Size(251, 211);
@@ -409,6 +413,15 @@ namespace Konsolowy {
 			// 
 			this->saveFileDialog1->Filter = L"Mapa bitowa 6-bitowa (*.bmp)|*.bmp";
 			// 
+			// label13
+			// 
+			this->label13->AutoSize = true;
+			this->label13->Location = System::Drawing::Point(3, 0);
+			this->label13->Name = L"label13";
+			this->label13->Size = System::Drawing::Size(77, 52);
+			this->label13->TabIndex = 0;
+			this->label13->Text = L"Autorzy:\r\nMicha³ Maciaœ\r\nMarcin Migda\r\nMicha³ Œliwa";
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -416,6 +429,8 @@ namespace Konsolowy {
 			this->ClientSize = System::Drawing::Size(284, 262);
 			this->Controls->Add(this->tabControl1);
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedSingle;
+			this->Icon = (cli::safe_cast<System::Drawing::Icon^>(resources->GetObject(L"$this.Icon")));
+			this->MaximizeBox = false;
 			this->Name = L"MyForm";
 			this->Text = L"Konwerter BMP <-> MMSS";
 			this->tabControl1->ResumeLayout(false);
@@ -423,6 +438,8 @@ namespace Konsolowy {
 			this->tabPage1->PerformLayout();
 			this->tabPage2->ResumeLayout(false);
 			this->tabPage2->PerformLayout();
+			this->tabPage3->ResumeLayout(false);
+			this->tabPage3->PerformLayout();
 			this->ResumeLayout(false);
 
 		}
@@ -456,6 +473,8 @@ namespace Konsolowy {
 				 //konwersja
 				 if (textBox1->Text != "")
 				 {
+					 GetPredictor gpr;
+					 gpr.getPr(listBox1->SelectedIndex);
 					 ConvertToMMSS cl;
 					 char* pathChar = (char*)(void*)Marshal::StringToHGlobalAnsi(textBox1->Text);
 					 int k = cl.ReadAndPrepare(pathChar);
@@ -465,8 +484,6 @@ namespace Konsolowy {
 						 saveFile1->ShowDialog();
 						 if (saveFile1->FileName != "")
 						 {
-							 GetPredictor gpr;
-							 gpr.getPr(listBox1->SelectedIndex);
 							 System::String ^path2 = saveFile1->FileName;
 							 char* pathSave = (char*)(void*)Marshal::StringToHGlobalAnsi(path2);
 							 int m = cl.saveFile(pathSave);
