@@ -364,7 +364,7 @@ unsigned char* getPredictor(unsigned char* colorsToProcess)
 		output[0] = colorsToProcess[0] + 64;
 		for (int i = 1; i < lengthOfColors; i++)
 		{
-			output[i] = colorsToProcess[i] - output[0] + 64;
+			output[i] = colorsToProcess[i] + 64 - colorsToProcess[i - 1];
 		}
 		//sub
 		break;
@@ -421,9 +421,9 @@ unsigned char* DecodePredictor(unsigned char* colorsToProcess)
 		//sub
 	case 1:
 		output[0] = colorsToProcess[0] - 64;
-		for (int i = 0; i < outputSize-1; ++i)
+		for (int i = 1; i < outputSize-1; ++i)
 		{
-			output[i] = colorsToProcess[i] - 64 + output[i - 1];
+			output[i] = (colorsToProcess[i] + output[i-1]) - 64;
 		}
 		break;
 		//up
